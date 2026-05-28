@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SS Card Maker</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+@font-face {
+  font-family: 'Anakotmai';
+  src: url('Anakotmai-Bold.otf') format('opentype');
+  font-weight: bold;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #e85d04;
+  --navy:   #1b3a4b;
+  --bg:     #0d0d1a;
+  --panel:  #111120;
+  --card:   #18182e;
+  --border: #1e1e3a;
+  --muted:  #555;
+  --text:   #ddd;
+}
+html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+
+/* ── HEADER ── */
+.app-header {
+  height: 52px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 18px; background: var(--panel); border-bottom: 1px solid var(--border);
+  flex-shrink: 0; z-index: 20; position: relative;
+}
+.app-title { font-size: 16px; font-weight: 800; color: var(--orange); letter-spacing: .5px; }
+.app-title span { color: #fff; font-weight: 400; }
+.btn-dl {
+  background: var(--orange); color: #fff; border: none; border-radius: 8px;
+  padding: 7px 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background .2s;
+}
+.btn-dl:hover { background: #c74d00; }
+
+/* ── MAIN LAYOUT ── */
+.app-body {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  height: calc(100vh - 52px);
+  overflow: hidden;
+}
+
+/* ── PREVIEW PANE ── */
+.preview-pane {
+  display: flex; align-items: center; justify-content: center;
+  background: #08080f; overflow: hidden; padding: 16px;
+}
+#canvas {
+  border-radius: 10px;
+  box-shadow: 0 16px 60px rgba(0,0,0,.75);
+  max-width: 100%; max-height: 100%;
+  display: block; cursor: default;
+}
+
+/* ── CONTROLS PANE ── */
+.controls-pane {
+  display: flex; flex-direction: column;
+  background: var(--panel); border-left: 1px solid var(--border);
+  overflow-y: auto; overflow-x: hidden;
+}
+.controls-pane::-webkit-scrollbar { width: 4px; }
+.controls-pane::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 2px; }
+
+/* ── SECTION ── */
+.ctrl-section {
+  padding: 12px 14px; border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.section-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--orange); margin-bottom: 2px;
+}
+
+/* ── UPLOAD CHIPS ── */
+.chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--card); border: 1.5px dashed #2e2e5e;
+  border-radius: 8px; padding: 7px 10px; font-size: 12px; color: #aaa;
+  cursor: pointer; position: relative; overflow: hidden;
+  transition: border-color .2s, color .2s; white-space: nowrap;
+}
+.chip:hover { border-color: var(--orange); color: var(--orange); }
+.chip.loaded { border-color: #3daa6e; border-style: solid; color: #3daa6e; }
+.chip input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.chip .chip-icon { font-size: 15px; }
+.chip .chip-name { font-size: 10px; color: inherit; display: block; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── OVERLAY LIST ── */
+.ov-list { display: flex; flex-direction: column; gap: 6px; }
+.ov-item {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card); border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 6px 8px; cursor: pointer;
+  transition: border-color .2s;
+}
+.ov-item:hover  { border-color: #6a3fac; }
+.ov-item.active { border-color: #9b59b6; background: #1a0f2e; }
+.ov-thumb {
+  width: 40px; height: 40px; object-fit: cover;
+  border-radius: 5px; flex-shrink: 0; border: 1px solid #2e2e5e;
+}
+.ov-info { flex: 1; min-width: 0; }
+.ov-name { font-size: 11px; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ov-size-row { display: flex; align-items: center; gap: 4px; margin-top: 3px; }
+.ov-size-row input[type=range] { flex: 1; accent-color: #9b59b6; height: 3px; }
+.ov-size-val { font-size: 10px; color: #9b59b6; min-width: 28px; text-align: right; }
+.ov-del {
+  background: none; border: none; color: #555; font-size: 15px;
+  cursor: pointer; padding: 2px 4px; border-radius: 4px; flex-shrink: 0;
+  transition: color .2s;
+}
+.ov-del:hover { color: #e85d04; }
+
+/* ── CROP EDITOR ── */
+.crop-editor { display: flex; flex-direction: column; gap: 6px; padding: 8px; background: #0a0a1e; border-radius: 8px; border: 1px solid var(--border); }
+.crop-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.crop-wrap canvas { display: block; width: 100%; border-radius: 6px; cursor: crosshair; border: 1px solid var(--border); }
+.sm-btn {
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--muted); border-radius: 6px; padding: 5px 10px;
+  font-size: 11px; cursor: pointer; transition: border-color .2s, color .2s;
+}
+.sm-btn:hover { border-color: #9b59b6; color: #9b59b6; }
+
+/* ── TEXT AREA ── */
+#textInput {
+  width: 100%; min-height: 140px; background: var(--card);
+  border: 1.5px solid var(--border); color: #fff;
+  border-radius: 8px; padding: 10px 12px; font-size: 14px;
+  line-height: 1.65; outline: none; resize: vertical;
+  font-family: 'Noto Sans Thai', sans-serif; transition: border-color .2s;
+}
+#textInput:focus { border-color: var(--orange); }
+#textInput::placeholder { color: #444; font-size: 12px; line-height: 1.5; }
+.hint-box {
+  background: #0a0a1e; border: 1px solid var(--border); border-radius: 6px;
+  padding: 7px 10px; font-size: 10.5px; color: #555; line-height: 1.8;
+}
+.hint-box b { color: #888; }
+.hint-box code { color: #7a9fff; background: var(--border); padding: 0 4px; border-radius: 3px; }
+
+/* ── BG PREVIEW ── */
+.bg-preview {
+  position: relative; border-radius: 8px; overflow: hidden;
+  height: 100px; background: #0f0f20;
+  border: 2px solid #2e2e5e;
+}
+.bg-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bg-preview .spin {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 8px; font-size: 24px;
+}
+.bg-preview .spin .dot { font-size: 11px; color: #888; }
+.bg-preview .style-tag {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,.7); color: #ccc; font-size: 11px;
+  padding: 4px 8px; text-align: center;
+}
+.bg-btn-row { display: flex; gap: 6px; }
+.bg-gen-btn {
+  flex: 1; background: linear-gradient(135deg, #1a0a2e, #2a1a4e);
+  border: 1.5px solid #9b59b6; color: #c39bd3; border-radius: 8px;
+  padding: 9px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.bg-gen-btn:hover { background: linear-gradient(135deg, #2a0a4e, #3a2a6e); color: #fff; }
+.bg-gen-btn:disabled { opacity: .4; cursor: not-allowed; }
+.bg-use-btn {
+  background: #3daa6e; border: none; color: #fff; border-radius: 8px;
+  padding: 9px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: background .2s; white-space: nowrap; display: none;
+}
+.bg-use-btn:hover { background: #2d8a5e; }
+.bg-use-btn.show { display: block; }
+
+/* ── Toggle preview button (mobile only) ── */
+.btn-toggle-preview {
+  display: none;
+  background: #1e1e3a; color: #aaa; border: 1px solid #2e2e5e;
+  border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;
+  transition: all .2s; white-space: nowrap;
+}
+.btn-toggle-preview.active { background: var(--orange); color: #fff; border-color: var(--orange); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+  .btn-toggle-preview { display: block; }
+  .app-body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .controls-pane { grid-row: 1; border-left: none; border-bottom: 1px solid var(--border); max-height: 56vh; overflow-y: auto; }
+  .preview-pane  { grid-row: 2; padding: 10px; transition: max-height .3s ease, opacity .3s ease; }
+  .preview-pane.hidden { max-height: 0 !important; overflow: hidden; opacity: 0; padding: 0; }
+  .controls-pane.expanded { max-height: calc(100vh - 52px); }
+}
+@media (max-width: 500px) {
+  .controls-pane { max-height: 60vh; }
+  .app-header { padding: 0 12px; }
+  .btn-dl { padding: 6px 12px; font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="app-title">SS <span>Card Maker</span></div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="btn-toggle-preview" id="togglePreviewBtn" onclick="togglePreview()">👁 Preview</button>
+    <button class="btn-dl" onclick="download()">⬇ Download</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="app-body">
+
+  <!-- PREVIEW -->
+  <div class="preview-pane" id="previewPane">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls-pane">
+
+    <!-- TEXT (บนสุด) -->
+    <div class="ctrl-section">
+      <div class="section-label">✍ ข้อความบน Card</div>
+      <textarea id="textInput"
+        placeholder="TH-AI Passport&#10;1,621 ล้าน&#10;&#10;แบบไม่มีรายละเอียด เรื่อง AI&#10;แต่ดันไปละเอียดเรื่องจอโฆษณา?"
+        oninput="render()"></textarea>
+      <button onclick="formatText()" id="fmtBtn"
+        style="width:100%;background:linear-gradient(135deg,#1a2a1a,#2a4a2a);
+               border:1.5px solid #3daa6e;color:#7dda9e;border-radius:8px;
+               padding:8px;font-size:12px;font-weight:700;cursor:pointer;
+               display:flex;align-items:center;justify-content:center;gap:6px;
+               transition:all .2s">
+        ✨ จัดรูปแบบข้อความให้สวย
+      </button>
+      <div id="fmtStatus" style="font-size:10px;color:#555;text-align:center;min-height:14px"></div>
+      <div class="hint-box">
+        <b>บรรทัดใหญ่</b> → พิมพ์ปกติ<br>
+        เว้น <code>1 บรรทัดว่าง</code> → <b>บรรทัดเล็ก</b><br>
+        ฟอนต์ <b>Anakotmai</b> • auto-size ตามกว้าง
+      </div>
+    </div>
+
+    <!-- AI SUGGEST BG -->
+    <div class="ctrl-section">
+      <div class="section-label">✨ AI แนะนำ BG</div>
+      <div class="bg-preview" id="bgPreview">
+        <div class="spin"><span>🤖</span><span class="dot">กดปุ่มด้านล่างเพื่อสร้าง</span></div>
+      </div>
+      <div id="genStatus" style="font-size:11px;color:var(--muted);text-align:center;min-height:16px"></div>
+      <div class="bg-btn-row">
+        <button class="bg-gen-btn" id="genBtn" onclick="genOneBG()">⚡ Auto Gen</button>
+        <button class="bg-gen-btn" id="geminiBtn" onclick="openGemini()"
+          style="border-color:#4285f4;color:#7ab4ff;background:linear-gradient(135deg,#0a1428,#1a2a4e)">
+          <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg"
+            style="width:14px;height:14px;filter:brightness(2)" onerror="this.style.display='none'">
+          Gemini
+        </button>
+      </div>
+    </div>
+
+    <!-- UPLOADS -->
+    <div class="ctrl-section">
+      <div class="section-label">Layers</div>
+      <div class="chip-row">
+
+        <!-- BG -->
+        <label class="chip" id="bgChip" title="Layer 3 — รูปพื้นหลัง">
+          <span class="chip-icon">📷</span>
+          <div><div style="font-size:12px">BG</div><div class="chip-name" id="bgName">พื้นหลัง</div></div>
+          <input type="file" accept="image/*" onchange="loadLayer(this,'bg')">
+        </label>
+
+        <!-- Overlay Add -->
+        <label class="chip" title="เพิ่มรูป Overlay (ได้หลายรูป)">
+          <span class="chip-icon">🖼</span>
+          <div><div style="font-size:12px">+ แทรกรูป</div><div class="chip-name">เพิ่มได้หลายรูป</div></div>
+          <input type="file" accept="image/*" multiple onchange="loadL25(this)">
+        </label>
+
+      </div>
+    </div>
+
+    <!-- OVERLAY LIST -->
+    <div class="ctrl-section" id="overlaySection" style="display:none">
+      <div class="section-label">🖼 แทรกรูป — คลิกเลือก / ลากบน Preview</div>
+      <div class="ov-list" id="ovList"></div>
+      <div class="crop-editor" id="cropEditor" style="display:none">
+        <div class="crop-label">ลากเพื่อ Crop รูปที่เลือก</div>
+        <div class="crop-wrap"><canvas id="cropCanvas"></canvas></div>
+        <button class="sm-btn" onclick="resetCrop()" style="width:100%">↺ Reset Crop</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- HIDDEN inputs for JS -->
+<input type="hidden" id="fontBig"   value="0">
+<input type="hidden" id="fontSmall" value="0">
+<input type="hidden" id="footerPct" value="81">
+
+<script>
+// ══════════════════════════════════════════
+//  MOBILE PREVIEW TOGGLE
+// ══════════════════════════════════════════
+let previewVisible = true;
+function togglePreview() {
+  previewVisible = !previewVisible;
+  const pane = document.getElementById('previewPane');
+  const ctrl = document.querySelector('.controls-pane');
+  const btn  = document.getElementById('togglePreviewBtn');
+  pane.classList.toggle('hidden', !previewVisible);
+  ctrl.classList.toggle('expanded', !previewVisible);
+  btn.classList.toggle('active', previewVisible);
+  btn.textContent = previewVisible ? '👁 Preview' : '🙈 Preview';
+  if (previewVisible) setTimeout(render, 320); // re-render หลัง transition
+}
+
+// ══════════════════════════════════════════
+//  FONT
+// ══════════════════════════════════════════
+let fontReady = false;
+async function loadFont() {
+  try {
+    const f = new FontFace('Anakotmai', 'url(Anakotmai-Bold.otf)', { weight: 'bold' });
+    await f.load(); document.fonts.add(f); fontReady = true;
+  } catch(e) { fontReady = false; }
+}
+const fontStr = sz => fontReady ? `bold ${sz}px Anakotmai` : `900 ${sz}px 'Noto Sans Thai',sans-serif`;
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+const L = { bg: null, template: null };
+
+// overlays array — แต่ละรูปเป็น object อิสระ
+let overlays   = [];
+let activeIdx  = -1; // index ที่เลือกอยู่ (สำหรับ crop)
+let ovDrag     = { on: false, idx: -1, ox: 0, oy: 0 };
+let cropDraw   = { on: false, sx: 0, sy: 0, x: 0, y: 0, w: 0, h: 0 };
+
+// ══════════════════════════════════════════
+//  LAYER LOADING
+// ══════════════════════════════════════════
+function loadImg(src, cb) {
+  const i = new Image(); i.onload = () => cb(i); i.onerror = () => cb(null); i.src = src;
+}
+function loadLayer(input, type) {
+  if (!input.files[0]) return;
+  const file = input.files[0];
+  loadImg(URL.createObjectURL(file), img => {
+    if (!img) return;
+    if (type === 'bg') { L.bg = img; document.getElementById('bgChip').classList.add('loaded'); document.getElementById('bgName').textContent = file.name; }
+    render();
+  });
+  input.value = '';
+}
+// ══════════════════════════════════════════
+//  AI GENERATE BG (Pollinations.ai)
+// ══════════════════════════════════════════
+
+// วิเคราะห์ scene จากข้อความ — ตรวจทั้งคำไทยและอังกฤษ
+function extractBGScene(text) {
+  const t = text.toLowerCase();
+  const parts = [];
+
+  // ── ธรรมชาติ / สัตว์ / สถานที่ ──
+  if (/นก|bird|นกอินทรี|eagle|กา|crow|นกแก้ว|parrot/.test(t))   parts.push('bird in flight');
+  if (/ต้นไม้|tree|ป่า|forest|jungle|สวน|garden/.test(t))         parts.push('large ancient trees forest canopy');
+  if (/ภูเขา|mountain|เขา|peak|ยอด/.test(t))                      parts.push('dramatic mountain landscape');
+  if (/ทะเล|sea|ocean|คลื่น|wave|ชายหาด|beach/.test(t))           parts.push('ocean waves dramatic coastline');
+  if (/ท้องฟ้า|sky|เมฆ|cloud|พระอาทิตย์|sunset|sunrise/.test(t)) parts.push('dramatic sky clouds golden light');
+  if (/แม่น้ำ|river|น้ำตก|waterfall|lake|ทะเลสาบ/.test(t))       parts.push('flowing river waterfall nature');
+  if (/เมือง|city|ตึก|building|skyscraper/.test(t))               parts.push('city skyline urban architecture');
+  if (/ดาว|star|อวกาศ|space|galaxy|จักรวาล/.test(t))             parts.push('galaxy stars night sky cosmos');
+  if (/ไฟ|fire|เปลวไฟ|flame/.test(t))                             parts.push('dramatic fire flames dark background');
+  if (/น้ำ|water|หยด|drop|ฝน|rain/.test(t))                      parts.push('water reflections drops dramatic');
+  if (/สิงโต|lion|เสือ|tiger|หมี|bear|สัตว์|animal/.test(t))     parts.push('majestic wild animal dramatic portrait');
+  if (/ดอกไม้|flower|กุหลาบ|rose|lotus|บัว/.test(t))            parts.push('beautiful flowers macro photography');
+
+  // ── เทคโนโลยี / ธุรกิจ ──
+  if (/ai|ปัญญาประดิษฐ์|digital|เทคโนโลยี|tech|software|data/.test(t))
+    parts.push('futuristic technology circuit board neon blue abstract');
+  if (/รัฐ|กระทรวง|พรรค|นโยบาย|รัฐบาล|งบ|ล้าน/.test(t))
+    parts.push('grand government hall parliament architecture dramatic');
+  if (/เงิน|finance|bank|ธนาคาร|หุ้น|ลงทุน/.test(t))
+    parts.push('financial district glass buildings city lights');
+  if (/ศึกษา|โรงเรียน|หนังสือ|study|education/.test(t))
+    parts.push('library bookshelves warm wood academic');
+  if (/สุขภาพ|โรงพยาบาล|แพทย์|hospital/.test(t))
+    parts.push('modern hospital clean minimal white blue');
+  if (/ประชุม|conference|meeting/.test(t))
+    parts.push('conference room professional modern interior');
+
+  if (parts.length > 0) return parts.join(', ');
+
+  // Fallback: ใช้คำจากข้อความแปลงเป็น keyword ตรงๆ
+  return 'dramatic cinematic landscape atmospheric professional photography';
+}
+
+// Rule-based fallback (ใช้ตอนไม่มี Claude API key)
+function ruleBasedFormat(text) {
+  const clean = text.trim().replace(/\n+/g, ' ').replace(/\s+/g, ' ');
+  const breaks = /([?!？！]|\s+(?:แต่|และ|หรือ|จาก|โดย|เพราะ|เนื่องจาก|ส่วน|เมื่อ|เพื่อ|ด้วย|กับ)\s+)/g;
+  const parts  = clean.split(breaks).map(p => p.trim()).filter(p => p && p.length > 2);
+  if (parts.length <= 1) {
+    if (clean.length > 30) {
+      const mid = Math.floor(clean.length / 2);
+      const sp  = clean.lastIndexOf(' ', mid);
+      return clean.slice(0, sp || mid) + '\n\n' + clean.slice((sp || mid) + 1);
+    }
+    return clean;
+  }
+  return parts.slice(0, 2).join(' ').trim() + '\n\n' + parts.slice(2).join(' ').trim();
+}
+
+async function openGemini() {
+  const text  = document.getElementById('textInput').value.trim();
+  const scene = text ? extractBGScene(text) : 'dramatic cinematic landscape';
+  const { label, style } = BG_STYLES[genStyleIdx % BG_STYLES.length];
+  genStyleIdx++;
+
+  const W = L.template ? L.template.naturalWidth  : 1080;
+  const H = L.template ? L.template.naturalHeight : 1350;
+
+  const prompt = `Create a ${W}x${H} portrait background image for a social media card.
+Scene: ${scene}
+Style: ${style}, high quality, sharp, professional photography
+Rules: NO text, NO people, NO faces, NO logos`;
+
+  const btn  = document.getElementById('geminiBtn');
+  const prev = document.getElementById('bgPreview');
+  btn.disabled = true; btn.innerHTML = '⏳ เปิด Gemini…';
+  prev.innerHTML = `<div class="spin"><span>✨</span><span id="timerDisplay" class="dot" style="font-size:20px;font-weight:700;color:#4285f4">0s</span><span class="dot">${label} via Gemini</span></div>`;
+  setGenStatus('เปิด Chrome และ Gemini Gem…', '#4285f4');
+
+  let elapsed = 0;
+  const timer = setInterval(() => {
+    elapsed++;
+    btn.innerHTML = `⏳ ${elapsed}s`;
+    const td = document.getElementById('timerDisplay');
+    if (td) td.textContent = elapsed + 's';
+  }, 1000);
+
+  clearInterval(timer);
+  // copy prompt + เปิด Gemini Gem
+  navigator.clipboard.writeText(prompt).catch(() => {});
+  window.open('https://gemini.google.com/gem/11cGCoI0D-vbDNYHy58C0ElLuek_E__yI', '_blank');
+  prev.innerHTML = `<div class="spin"><span>✨</span><span class="dot">เปิด Gemini แล้ว — วาง prompt แล้วสร้างรูป</span></div>`;
+  setGenStatus('📋 Prompt ถูกคัดลอกแล้ว — วางใน Gemini', '#4285f4');
+
+  btn.disabled = false;
+  btn.innerHTML = '<img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" style="width:14px;height:14px;filter:brightness(2)" onerror="this.style.display=\'none\'"> Gemini';
+}
+
+let pendingBGImg = null;
+let genStyleIdx  = 0;
+const BG_STYLES  = [
+  { label: 'Dark & Cinematic',  style: 'dark moody cinematic dramatic shadows sharp detailed photography' },
+  { label: 'Golden Hour',       style: 'golden hour warm sunlight glowing sharp clear photography' },
+  { label: 'Atmospheric',       style: 'atmospheric wide angle dramatic sky sharp focus photography' },
+  { label: 'Bold & Vivid',      style: 'vivid saturated colors high contrast sharp detailed bold' },
+];
+
+function genOneBG() {
+  const text = document.getElementById('textInput').value.trim();
+  if (!text) {
+    setGenStatus('⚠️ พิมพ์ข้อความในการ์ดก่อน', '#e94560'); return;
+  }
+  const W = L.template ? L.template.naturalWidth  : 1080;
+  const H = L.template ? L.template.naturalHeight : 1350;
+  const btn = document.getElementById('genBtn');
+  const prev = document.getElementById('bgPreview');
+
+  // สลับ style วนไปเรื่อยๆ
+  const { label, style } = BG_STYLES[genStyleIdx % BG_STYLES.length];
+  genStyleIdx++;
+
+  btn.disabled = true;
+  btn.innerHTML = '⏳ 0s';
+  prev.innerHTML = `<div class="spin"><span>🎨</span><span id="timerDisplay" class="dot" style="font-size:22px;font-weight:700;color:#e85d04">0s</span><span class="dot">${label}…</span></div>`;
+  setGenStatus('', '#e85d04');
+
+  const scene  = extractBGScene(text);
+  const seed   = Math.floor(Math.random() * 999999);
+  const prompt = `${scene}, ${style}, professional photography background, no text no words no letters no faces no people`;
+  // Direct load — Pollinations.ai รองรับ CORS
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${W}&height=${H}&seed=${seed}&enhance=true`;
+
+  let elapsed = 0;
+  const timer = setInterval(() => {
+    elapsed++;
+    btn.innerHTML = `⏳ ${elapsed}s`;
+    const td = document.getElementById('timerDisplay');
+    if (td) td.textContent = elapsed + 's';
+  }, 1000);
+
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+
+  img.onload = () => {
+    clearInterval(timer);
+    pendingBGImg = img;
+    prev.innerHTML = `<img src="${img.src}"><div class="style-tag">${label}</div>`;
+    btn.disabled = false;
+    btn.innerHTML = '🔄 สร้างใหม่';
+    setGenStatus(`✅ ${label} — ${elapsed}s`, '#3daa6e');
+    // ใส่เป็น BG ทันที
+    L.bg = img;
+    document.getElementById('bgChip').classList.add('loaded');
+    document.getElementById('bgName').textContent = '✨ AI Generated';
+    render();
+  };
+
+  img.onerror = () => {
+    clearInterval(timer);
+    pendingBGImg = null;
+    prev.innerHTML = `<div class="spin"><span>❌</span><span class="dot">ล้มเหลว — กด "สร้างใหม่"</span></div>`;
+    btn.disabled = false;
+    btn.innerHTML = '🔄 ลองใหม่';
+    setGenStatus('❌ ล้มเหลว ลองกดสร้างใหม่อีกครั้ง', '#e94560');
+  };
+
+  img.src = url;
+}
+
+function usePendingBG() {
+  if (!pendingBGImg) return;
+  L.bg = pendingBGImg;
+  document.getElementById('bgChip').classList.add('loaded');
+  document.getElementById('bgName').textContent = '✨ AI Generated';
+  document.getElementById('useBtn').classList.remove('show');
+  setGenStatus('✅ ใช้รูปนี้เป็น BG แล้ว', '#3daa6e');
+  render();
+}
+
+function setGenStatus(msg, color) {
+  const s = document.getElementById('genStatus');
+  s.textContent = msg; s.style.color = color;
+}
+
+// ── จัดรูปแบบข้อความด้วย Claude ──
+async function formatText() {
+  const ta   = document.getElementById('textInput');
+  const btn  = document.getElementById('fmtBtn');
+  const stat = document.getElementById('fmtStatus');
+  const text = ta.value.trim();
+  if (!text) { stat.style.color='#e94560'; stat.textContent='⚠️ กรุณาพิมพ์ข้อความก่อน'; return; }
+
+  btn.disabled = true; btn.textContent = '⏳ กำลังจัด…';
+  stat.style.color = '#e85d04'; stat.textContent = 'กำลังจัดรูปแบบ…';
+
+  try {
+    const apiKey = localStorage.getItem('claude_api_key') || '';
+    let formatted, source;
+
+    if (apiKey) {
+      // เรียก Anthropic API โดยตรงจาก browser
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5', max_tokens: 300,
+          messages: [{ role: 'user', content:
+            `จัดรูปแบบข้อความนี้สำหรับการ์ดโซเชียลมีเดีย:\n"${text}"\n\nกฎ:\n- ส่วนที่ 1 (หัวข้อ): 1-2 บรรทัด ไม่เกิน 25 ตัวอักษร\n- เว้นบรรทัดว่าง 1 บรรทัด\n- ส่วนที่ 2 (รายละเอียด): 1-3 บรรทัด ไม่เกิน 35 ตัวอักษร\n- ตอบเฉพาะข้อความเท่านั้น` }],
+        }),
+      });
+      const d = await r.json();
+      if (d.content?.[0]?.text) { formatted = d.content[0].text.trim(); source = '🤖 Claude'; }
+      else throw new Error(d.error?.message || 'API error');
+    } else {
+      formatted = ruleBasedFormat(text); source = '📐 Rule-based';
+    }
+
+    ta.value = formatted; render();
+    stat.style.color = '#3daa6e';
+    stat.textContent = `✅ จัดแล้ว (${source})`;
+  } catch(e) {
+    stat.style.color = '#e94560';
+    stat.textContent = '❌ ' + e.message;
+  }
+
+  btn.disabled = false; btn.innerHTML = '✨ จัดรูปแบบข้อความให้สวย';
+  setTimeout(() => { stat.textContent = ''; }, 4000);
+}
+
+function tryAutoLoadTemplate() {
+  loadImg('template.png?' + Date.now(), img => { if (img) L.template = img; render(); });
+}
+
+// ══════════════════════════════════════════
+//  OVERLAY — ARRAY-BASED
+// ══════════════════════════════════════════
+function newOverlay(img, name) {
+  const W = L.template ? L.template.naturalWidth  : 1080;
+  const H = L.template ? L.template.naturalHeight : 1350;
+  const dw = Math.round(W * 0.5);
+  const dh = Math.round(dw * img.height / img.width);
+  return {
+    image: img, name,
+    cx: 0, cy: 0, cw: img.width, ch: img.height,
+    px: Math.round((W - dw) / 2),
+    py: Math.round(H * 0.2),
+    dw, dh, sizePct: 50,
+  };
+}
+
+function loadL25(input) {
+  const files = Array.from(input.files); if (!files.length) return;
+  let done = 0;
+  files.forEach(file => {
+    loadImg(URL.createObjectURL(file), img => {
+      if (img) overlays.push(newOverlay(img, file.name));
+      if (++done === files.length) {
+        activeIdx = overlays.length - 1;
+        renderOverlayList();
+        setActiveOverlay(activeIdx);
+        render();
+      }
+    });
+  });
+  input.value = '';
+}
+
+function removeOverlay(idx) {
+  overlays.splice(idx, 1);
+  if (activeIdx >= overlays.length) activeIdx = overlays.length - 1;
+  renderOverlayList();
+  if (activeIdx >= 0) setActiveOverlay(activeIdx); else hideCropEditor();
+  render();
+}
+
+function setActiveOverlay(idx) {
+  activeIdx = idx;
+  renderOverlayList();
+  if (idx < 0 || !overlays[idx]) { hideCropEditor(); return; }
+  document.getElementById('cropEditor').style.display = '';
+  initCropCanvas();
+}
+
+function hideCropEditor() {
+  document.getElementById('cropEditor').style.display = 'none';
+}
+
+// ── Render sidebar list ──
+function renderOverlayList() {
+  const list = document.getElementById('ovList');
+  const sec  = document.getElementById('overlaySection');
+  list.innerHTML = '';
+  if (!overlays.length) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+
+  overlays.forEach((ov, i) => {
+    const item = document.createElement('div');
+    item.className = 'ov-item' + (i === activeIdx ? ' active' : '');
+    item.onclick = () => setActiveOverlay(i);
+
+    // Thumbnail
+    const thumb = document.createElement('img');
+    thumb.className = 'ov-thumb';
+    // draw cropped thumb
+    const tc = document.createElement('canvas');
+    const srcW = ov.cw || ov.image.width, srcH = ov.ch || ov.image.height;
+    tc.width = 80; tc.height = Math.round(80 * srcH / srcW);
+    tc.getContext('2d').drawImage(ov.image, ov.cx, ov.cy, srcW, srcH, 0, 0, tc.width, tc.height);
+    thumb.src = tc.toDataURL();
+
+    // Info + size slider
+    const info = document.createElement('div');
+    info.className = 'ov-info';
+    info.innerHTML = `<div class="ov-name">${ov.name}</div>
+      <div class="ov-size-row">
+        <input type="range" min="5" max="100" value="${ov.sizePct}"
+          oninput="onOvSize(${i},this)" onclick="e=>e.stopPropagation()">
+        <div class="ov-size-val">${ov.sizePct}%</div>
+      </div>`;
+
+    // Delete
+    const del = document.createElement('button');
+    del.className = 'ov-del'; del.textContent = '✕';
+    del.onclick = e => { e.stopPropagation(); removeOverlay(i); };
+
+    item.appendChild(thumb); item.appendChild(info); item.appendChild(del);
+    list.appendChild(item);
+  });
+}
+
+function onOvSize(idx, el) {
+  const ov = overlays[idx]; if (!ov) return;
+  const pct = parseInt(el.value);
+  ov.sizePct = pct;
+  el.nextElementSibling.textContent = pct + '%';
+  const W = L.template ? L.template.naturalWidth : 1080;
+  ov.dw = Math.round(W * pct / 100);
+  ov.dh = Math.round(ov.dw * (ov.ch || ov.image.height) / (ov.cw || ov.image.width));
+  render();
+}
+
+// ── Crop canvas ──
+function initCropCanvas() {
+  const cc = document.getElementById('cropCanvas');
+  if (!cc) return;
+  cc.onmousedown  = onCropDown; cc.onmousemove  = onCropMove; cc.onmouseup    = onCropUp;
+  cc.ontouchstart = e => { e.preventDefault(); onCropDown(e.touches[0]); };
+  cc.ontouchmove  = e => { e.preventDefault(); onCropMove(e.touches[0]); };
+  cc.ontouchend   = e => { e.preventDefault(); onCropUp(); };
+  drawCropCanvas(0, 0, 0, 0);
+}
+
+function cropPt(e) {
+  const cc = document.getElementById('cropCanvas'), r = cc.getBoundingClientRect(), sc = cc.width / r.width;
+  return { x: (e.clientX - r.left) * sc, y: (e.clientY - r.top) * sc };
+}
+
+function drawCropCanvas(sx, sy, sw, sh) {
+  const cc = document.getElementById('cropCanvas');
+  const ov = overlays[activeIdx];
+  if (!cc || !ov) return;
+  const maxW = cc.parentElement.clientWidth || 280;
+  const dsc  = maxW / ov.image.width;
+  cc.width = Math.round(ov.image.width * dsc); cc.height = Math.round(ov.image.height * dsc);
+  const ctx = cc.getContext('2d');
+  ctx.drawImage(ov.image, 0, 0, cc.width, cc.height);
+  if (sw > 4 && sh > 4) {
+    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(0, 0, cc.width, cc.height);
+    ctx.drawImage(ov.image, sx/dsc, sy/dsc, sw/dsc, sh/dsc, sx, sy, sw, sh);
+    ctx.strokeStyle = '#9b59b6'; ctx.lineWidth = 2;
+    ctx.setLineDash([6, 3]); ctx.strokeRect(sx, sy, sw, sh); ctx.setLineDash([]);
+    [[sx,sy],[sx+sw,sy],[sx,sy+sh],[sx+sw,sy+sh]].forEach(([hx,hy]) => {
+      ctx.fillStyle = '#9b59b6'; ctx.fillRect(hx-5, hy-5, 10, 10);
+    });
+  }
+}
+function onCropDown(e) {
+  const p = cropPt(e); cropDraw.on = true; cropDraw.sx = p.x; cropDraw.sy = p.y;
+  cropDraw.x = p.x; cropDraw.y = p.y; cropDraw.w = 0; cropDraw.h = 0;
+}
+function onCropMove(e) {
+  if (!cropDraw.on) return;
+  const p = cropPt(e);
+  cropDraw.x = Math.min(p.x, cropDraw.sx); cropDraw.y = Math.min(p.y, cropDraw.sy);
+  cropDraw.w = Math.abs(p.x - cropDraw.sx); cropDraw.h = Math.abs(p.y - cropDraw.sy);
+  drawCropCanvas(cropDraw.x, cropDraw.y, cropDraw.w, cropDraw.h);
+}
+function onCropUp() {
+  if (!cropDraw.on) return; cropDraw.on = false;
+  const ov = overlays[activeIdx]; if (!ov) return;
+  const cc = document.getElementById('cropCanvas'), dsc = cc.width / ov.image.width;
+  if (cropDraw.w > 6 && cropDraw.h > 6) {
+    ov.cx = Math.round(cropDraw.x / dsc); ov.cy = Math.round(cropDraw.y / dsc);
+    ov.cw = Math.round(cropDraw.w / dsc); ov.ch = Math.round(cropDraw.h / dsc);
+    const W = L.template ? L.template.naturalWidth : 1080;
+    ov.dw = Math.round(W * ov.sizePct / 100);
+    ov.dh = Math.round(ov.dw * ov.ch / ov.cw);
+    renderOverlayList();
+  }
+  render();
+}
+
+function resetCrop() {
+  const ov = overlays[activeIdx]; if (!ov) return;
+  ov.cx = 0; ov.cy = 0; ov.cw = ov.image.width; ov.ch = ov.image.height;
+  const W = L.template ? L.template.naturalWidth : 1080;
+  ov.dw = Math.round(W * ov.sizePct / 100); ov.dh = Math.round(ov.dw * ov.ch / ov.cw);
+  drawCropCanvas(0, 0, 0, 0); renderOverlayList(); render();
+}
+
+// ── Canvas drag — ย้ายรูปได้ทุกรูป ──
+function initCanvasEvents() {
+  const cv = document.getElementById('canvas');
+  cv.addEventListener('mousedown',  onCvDown);
+  cv.addEventListener('mousemove',  onCvMove);
+  cv.addEventListener('mouseup',    onCvUp);
+  cv.addEventListener('mouseleave', onCvUp);
+  cv.addEventListener('touchstart', e => { e.preventDefault(); onCvDown(e.touches[0]); }, { passive: false });
+  cv.addEventListener('touchmove',  e => { e.preventDefault(); onCvMove(e.touches[0]); }, { passive: false });
+  cv.addEventListener('touchend',   e => { e.preventDefault(); onCvUp(); });
+}
+function cvPt(e) {
+  const cv = document.getElementById('canvas'), r = cv.getBoundingClientRect(), sc = cv.width / r.width;
+  return { x: (e.clientX - r.left) * sc, y: (e.clientY - r.top) * sc };
+}
+function ovAt(x, y) {
+  // หา overlay ล่างสุด (วาดทีหลัง = อยู่บนสุด) ที่ตำแหน่งนี้
+  for (let i = overlays.length - 1; i >= 0; i--) {
+    const o = overlays[i];
+    if (x >= o.px && x <= o.px + o.dw && y >= o.py && y <= o.py + o.dh) return i;
+  }
+  return -1;
+}
+function onCvDown(e) {
+  if (!overlays.length) return;
+  const p = cvPt(e), i = ovAt(p.x, p.y);
+  if (i >= 0) {
+    ovDrag.on = true; ovDrag.idx = i;
+    ovDrag.ox = p.x - overlays[i].px; ovDrag.oy = p.y - overlays[i].py;
+    document.getElementById('canvas').style.cursor = 'grabbing';
+    if (i !== activeIdx) { activeIdx = i; renderOverlayList(); setActiveOverlay(i); }
+  }
+}
+function onCvMove(e) {
+  const cv = document.getElementById('canvas');
+  if (ovDrag.on) {
+    const p = cvPt(e), o = overlays[ovDrag.idx];
+    if (o) { o.px = p.x - ovDrag.ox; o.py = p.y - ovDrag.oy; render(); }
+  } else {
+    const p = cvPt(e); cv.style.cursor = ovAt(p.x, p.y) >= 0 ? 'grab' : 'default';
+  }
+}
+function onCvUp() {
+  ovDrag.on = false; document.getElementById('canvas').style.cursor = 'default';
+}
+
+// ══════════════════════════════════════════
+//  CANVAS UTILS
+// ══════════════════════════════════════════
+function drawCover(ctx, img, x, y, w, h) {
+  const sc = Math.max(w / img.width, h / img.height);
+  ctx.drawImage(img, x + (w - img.width*sc)/2, y + (h - img.height*sc)/2, img.width*sc, img.height*sc);
+}
+
+function autoFontSize(ctx, lines, maxW, maxPx, minPx) {
+  if (!lines.length) return maxPx;
+  let sz = maxPx;
+  while (sz > minPx) {
+    ctx.font = fontStr(sz);
+    if (lines.every(l => ctx.measureText(l).width <= maxW)) return sz;
+    sz--;
+  }
+  return minPx;
+}
+
+// คำนวณ font size ทั้งคู่พร้อมกัน และจำกัดความสูงรวมไม่เกิน H/2
+function calcFontSizes(ctx, bigLines, smLines, maxW, H) {
+  let bigFs = autoFontSize(ctx, bigLines, maxW, Math.round(H * 0.12), 16);  // จำกัดกว้างก่อน
+  let smFs  = autoFontSize(ctx, smLines,  maxW, Math.round(H * 0.072), 14);
+
+  const secGap  = (bigLines.length && smLines.length) ? Math.round(bigFs * 0.12) : 0;
+  const maxTextH = Math.round(H * 0.50); // ห้ามสูงเกินครึ่งรูป
+
+  const totalH = () =>
+    bigLines.length * Math.round(bigFs * 1.20) +
+    smLines.length  * Math.round(smFs  * 1.22) +
+    (bigLines.length && smLines.length ? Math.round(bigFs * 0.12) : 0);
+
+  // ลด font ลงจนความสูงรวม ≤ H/2
+  while (totalH() > maxTextH && (bigFs > 16 || smFs > 14)) {
+    if (bigFs > 16) bigFs--;
+    if (smFs  > 14) smFs--;
+  }
+  return { bigFs, smFs };
+}
+
+// ══════════════════════════════════════════
+//  RENDER TEXT
+// ══════════════════════════════════════════
+
+// แยก big/small: ถ้ามีบรรทัดว่างคั่นใช้นั้น, ถ้าไม่มีให้ 2 บรรทัดแรก=ใหญ่ ที่เหลือ=เล็ก
+function parseTextSections(raw) {
+  if (/\n\s*\n/.test(raw)) {
+    const parts = raw.split(/\n\s*\n/).map(s => s.split('\n').map(l => l.trim()).filter(Boolean)).filter(s => s.length);
+    return { bigLines: parts[0] || [], smLines: parts.slice(1).flat() };
+  }
+  const all = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  return { bigLines: all.slice(0, 2), smLines: all.slice(2) };
+}
+
+// word-wrap สำหรับภาษาไทย (แยกตามตัวอักษร) + ภาษาอังกฤษ (แยกตามคำ)
+function wrapLine(ctx, text, maxW) {
+  if (ctx.measureText(text).width <= maxW) return [text];
+  const lines = []; let cur = '';
+  // ลอง word-wrap ก่อน (สำหรับภาษาอังกฤษ)
+  const words = text.split(' ');
+  if (words.length > 1) {
+    for (const word of words) {
+      const test = cur ? cur + ' ' + word : word;
+      if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = word; }
+      else cur = test;
+    }
+  } else {
+    // ภาษาไทย: แยกตามตัวอักษร
+    for (const ch of text) {
+      if (ctx.measureText(cur + ch).width > maxW && cur) { lines.push(cur); cur = ch; }
+      else cur += ch;
+    }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+function renderText(ctx, W, H) {
+  const raw = document.getElementById('textInput').value;
+  if (!raw.trim()) return;
+
+  const footerY   = Math.round(H * (parseInt(document.getElementById('footerPct').value) / 100));
+  const gapFooter = Math.round(H * 0.002);
+  const padX      = Math.round(W * 0.048);
+  const maxW      = W - padX * 2;
+
+  const { bigLines, smLines } = parseTextSections(raw);
+  const { bigFs,   smFs   }   = calcFontSizes(ctx, bigLines, smLines, maxW, H);
+
+  ctx.font = fontStr(bigFs);
+  const bigWrapped = bigLines.flatMap(ln => wrapLine(ctx, ln, maxW));
+  ctx.font = fontStr(smFs);
+  const smWrapped  = smLines.flatMap(ln  => wrapLine(ctx, ln, maxW));
+
+  const bigLH  = Math.round(bigFs * 1.20);
+  const smLH   = Math.round(smFs  * 1.22);
+  const secGap = (bigWrapped.length && smWrapped.length) ? Math.round(bigFs * 0.12) : 0;
+  const totalH = bigWrapped.length * bigLH + smWrapped.length * smLH + secGap;
+
+  let curY = footerY - gapFooter - totalH;
+  ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = '#fff';
+
+  bigWrapped.forEach(ln => { ctx.font = fontStr(bigFs); ctx.fillText(ln, padX, curY); curY += bigLH; });
+  curY += secGap;
+  smWrapped.forEach(ln  => { ctx.font = fontStr(smFs);  ctx.fillText(ln, padX, curY); curY += smLH;  });
+}
+
+// ══════════════════════════════════════════
+//  MAIN RENDER
+// ══════════════════════════════════════════
+function render() {
+  const canvas = document.getElementById('canvas');
+  const W = L.template ? L.template.naturalWidth  : 1080;
+  const H = L.template ? L.template.naturalHeight : 1350;
+  canvas.width = W; canvas.height = H;
+
+  // Scale to pane
+  const pane = document.getElementById('previewPane');
+  const maxW = pane.clientWidth  - 32;
+  const maxH = pane.clientHeight - 32;
+  const sc   = Math.min(1, maxW / W, maxH / H);
+  canvas.style.width  = Math.round(W * sc) + 'px';
+  canvas.style.height = Math.round(H * sc) + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  // Layer 3: BG
+  if (L.bg) {
+    drawCover(ctx, L.bg, 0, 0, W, H);
+  } else {
+    ctx.fillStyle = '#1e1e30'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.font = `${Math.round(W * 0.035)}px Arial`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('← อัปโหลด BG', W / 2, H / 2);
+  }
+
+  // Layer 2.5: Overlays (หลัง template)
+  overlays.forEach(o => {
+    const sw = o.cw || o.image.width, sh = o.ch || o.image.height;
+    ctx.drawImage(o.image, o.cx, o.cy, sw, sh, o.px, o.py, o.dw, o.dh);
+  });
+
+  // Layer 2: Template PNG
+  if (L.template) {
+    ctx.drawImage(L.template, 0, 0, W, H);
+  } else {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(.55, 'rgba(0,0,0,.6)'); g.addColorStop(1, 'rgba(0,0,0,.95)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+
+  // Overlay outlines — เฉพาะ activeIdx
+  if (activeIdx >= 0 && overlays[activeIdx]) {
+    const o = overlays[activeIdx];
+    ctx.save();
+    ctx.strokeStyle = 'rgba(155,89,182,0.8)'; ctx.lineWidth = 3;
+    ctx.setLineDash([8, 4]); ctx.strokeRect(o.px, o.py, o.dw, o.dh); ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  // Layer 1: Text
+  renderText(ctx, W, H);
+}
+
+// ══════════════════════════════════════════
+//  DOWNLOAD (ไม่มี outline)
+// ══════════════════════════════════════════
+function download() {
+  // วาดใหม่โดยไม่มี outline
+  const canvas = document.getElementById('canvas');
+  const W = L.template ? L.template.naturalWidth  : 1080;
+  const H = L.template ? L.template.naturalHeight : 1350;
+  const offscreen = document.createElement('canvas');
+  offscreen.width = W; offscreen.height = H;
+  const ctx = offscreen.getContext('2d');
+
+  if (L.bg) drawCover(ctx, L.bg, 0, 0, W, H);
+  else { ctx.fillStyle = '#1e1e30'; ctx.fillRect(0, 0, W, H); }
+
+  overlays.forEach(o => {
+    const sw = o.cw || o.image.width, sh = o.ch || o.image.height;
+    ctx.drawImage(o.image, o.cx, o.cy, sw, sh, o.px, o.py, o.dw, o.dh);
+  });
+
+  if (L.template) ctx.drawImage(L.template, 0, 0, W, H);
+  else {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(.55, 'rgba(0,0,0,.6)'); g.addColorStop(1, 'rgba(0,0,0,.95)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+
+  // Text (render onto offscreen)
+  const savedCanvas = document.getElementById('canvas');
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = W; tempCanvas.height = H;
+  // Use renderText directly on offscreen ctx
+  renderTextOn(ctx, W, H);
+
+  const a = document.createElement('a');
+  a.download = 'ss-card.png';
+  a.href = offscreen.toDataURL('image/png');
+  a.click();
+}
+
+function renderTextOn(ctx, W, H) {
+  const raw = document.getElementById('textInput').value;
+  if (!raw.trim()) return;
+  const footerY   = Math.round(H * (parseInt(document.getElementById('footerPct').value) / 100));
+  const gapFooter = Math.round(H * 0.002);
+  const padX = Math.round(W * 0.048);
+  const maxW = W - padX * 2;
+  const { bigLines, smLines } = parseTextSections(raw);
+  const { bigFs, smFs }       = calcFontSizes(ctx, bigLines, smLines, maxW, H);
+  ctx.font = fontStr(bigFs);
+  const bigWrapped = bigLines.flatMap(ln => wrapLine(ctx, ln, maxW));
+  ctx.font = fontStr(smFs);
+  const smWrapped  = smLines.flatMap(ln  => wrapLine(ctx, ln, maxW));
+  const bigLH = Math.round(bigFs * 1.20), smLH = Math.round(smFs * 1.22);
+  const secGap = (bigWrapped.length && smWrapped.length) ? Math.round(bigFs * 0.12) : 0;
+  const totalH = bigWrapped.length * bigLH + smWrapped.length * smLH + secGap;
+  let curY = footerY - gapFooter - totalH;
+  ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = '#fff';
+  bigWrapped.forEach(ln => { ctx.font = fontStr(bigFs); ctx.fillText(ln, padX, curY); curY += bigLH; });
+  curY += secGap;
+  smWrapped.forEach(ln  => { ctx.font = fontStr(smFs);  ctx.fillText(ln, padX, curY); curY += smLH;  });
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+window.addEventListener('load', async () => {
+  await loadFont();
+  tryAutoLoadTemplate();
+  initCanvasEvents();
+  render();
+  // Responsive: re-render on container resize
+  new ResizeObserver(render).observe(document.getElementById('previewPane'));
+});
+</script>
+</body>
+</html>
