@@ -118,10 +118,6 @@ html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', sans-serif
 }
 .ov-del:hover { color: #e85d04; }
 
-/* ── CROP EDITOR ── */
-.crop-editor { display: flex; flex-direction: column; gap: 6px; padding: 8px; background: #0a0a1e; border-radius: 8px; border: 1px solid var(--border); }
-.crop-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-.crop-wrap canvas { display: block; width: 100%; border-radius: 6px; cursor: crosshair; border: 1px solid var(--border); }
 .sm-btn {
   background: var(--card); border: 1px solid var(--border);
   color: var(--muted); border-radius: 6px; padding: 5px 10px;
@@ -180,6 +176,23 @@ html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', sans-serif
 .bg-use-btn:hover { background: #2d8a5e; }
 .bg-use-btn.show { display: block; }
 
+/* ── Full Preview Modal ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.92); align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-img {
+  max-width: 95vw; max-height: 95vh;
+  border-radius: 12px; box-shadow: 0 20px 80px rgba(0,0,0,0.8);
+}
+.modal-close {
+  position: fixed; top: 16px; right: 16px;
+  background: rgba(255,255,255,0.15); color: #fff; border: none;
+  border-radius: 50%; width: 40px; height: 40px; font-size: 20px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
 /* ── Toggle preview button (mobile only) ── */
 .btn-toggle-preview {
   display: none;
@@ -208,10 +221,17 @@ html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', sans-serif
 <body>
 
 <!-- HEADER -->
+<!-- Full Preview Modal -->
+<div class="modal-overlay" id="previewModal" onclick="closeModal()">
+  <button class="modal-close" onclick="closeModal()">✕</button>
+  <img class="modal-img" id="modalImg">
+</div>
+
 <header class="app-header">
   <div class="app-title">SS <span>Card Maker</span></div>
   <div style="display:flex;gap:8px;align-items:center">
-    <button class="btn-toggle-preview" id="togglePreviewBtn" onclick="togglePreview()">👁 Preview</button>
+    <button class="btn-toggle-preview" id="togglePreviewBtn" onclick="togglePreview()">🙈 ซ่อน</button>
+    <button class="btn-toggle-preview active" onclick="openModal()" style="display:flex">👁 เต็มจอ</button>
     <button class="btn-dl" onclick="download()">⬇ Download</button>
   </div>
 </header>
@@ -291,13 +311,8 @@ html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', sans-serif
 
     <!-- OVERLAY LIST -->
     <div class="ctrl-section" id="overlaySection" style="display:none">
-      <div class="section-label">🖼 แทรกรูป — คลิกเลือก / ลากบน Preview</div>
+      <div class="section-label">🖼 แทรกรูป — ลากบน Preview เพื่อย้าย</div>
       <div class="ov-list" id="ovList"></div>
-      <div class="crop-editor" id="cropEditor" style="display:none">
-        <div class="crop-label">ลากเพื่อ Crop รูปที่เลือก</div>
-        <div class="crop-wrap"><canvas id="cropCanvas"></canvas></div>
-        <button class="sm-btn" onclick="resetCrop()" style="width:100%">↺ Reset Crop</button>
-      </div>
     </div>
 
   </div>
@@ -320,9 +335,19 @@ function togglePreview() {
   const btn  = document.getElementById('togglePreviewBtn');
   pane.classList.toggle('hidden', !previewVisible);
   ctrl.classList.toggle('expanded', !previewVisible);
-  btn.classList.toggle('active', previewVisible);
-  btn.textContent = previewVisible ? '👁 Preview' : '🙈 Preview';
-  if (previewVisible) setTimeout(render, 320); // re-render หลัง transition
+  btn.textContent = previewVisible ? '🙈 ซ่อน' : '👁 แสดง';
+  if (previewVisible) setTimeout(render, 320);
+}
+
+function openModal() {
+  render();
+  const canvas = document.getElementById('canvas');
+  document.getElementById('modalImg').src = canvas.toDataURL('image/jpeg', 0.95);
+  document.getElementById('previewModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('previewModal').classList.remove('open');
 }
 
 // ══════════════════════════════════════════
