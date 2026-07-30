@@ -1,0 +1,4 @@
+local.config.json
+gemini-profile/
+node_modules/
+.DS_Store

@@ -276,6 +276,13 @@ html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', sans-serif
         <div class="spin"><span>🤖</span><span class="dot">กดปุ่มด้านล่างเพื่อสร้าง</span></div>
       </div>
       <div id="genStatus" style="font-size:11px;color:var(--muted);text-align:center;min-height:16px"></div>
+      <div id="hfTokenSection" style="display:none;margin:6px 0 8px">
+        <div style="font-size:10px;color:#888;margin-bottom:4px">ต้องการ <a href="https://huggingface.co/settings/tokens" target="_blank" style="color:#4285f4">HuggingFace Token (ฟรี)</a> — New token → Read</div>
+        <div style="display:flex;gap:6px">
+          <input id="hfTokenInput" type="password" placeholder="hf_..." style="flex:1;padding:5px 8px;background:#0d1117;border:1px solid #444;border-radius:6px;color:#fff;font-size:11px">
+          <button onclick="saveHFToken()" style="padding:5px 10px;background:#3daa6e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap">บันทึก</button>
+        </div>
+      </div>
       <div class="bg-btn-row">
         <button class="bg-gen-btn" id="genBtn" onclick="genOneBG()">⚡ Auto Gen</button>
         <button class="bg-gen-btn" id="geminiBtn" onclick="openGemini()"
@@ -398,38 +405,36 @@ function extractBGScene(text) {
   const t = text.toLowerCase();
   const parts = [];
 
-  // ── ธรรมชาติ / สัตว์ / สถานที่ ──
-  if (/นก|bird|นกอินทรี|eagle|กา|crow|นกแก้ว|parrot/.test(t))   parts.push('bird in flight');
-  if (/ต้นไม้|tree|ป่า|forest|jungle|สวน|garden/.test(t))         parts.push('large ancient trees forest canopy');
-  if (/ภูเขา|mountain|เขา|peak|ยอด/.test(t))                      parts.push('dramatic mountain landscape');
-  if (/ทะเล|sea|ocean|คลื่น|wave|ชายหาด|beach/.test(t))           parts.push('ocean waves dramatic coastline');
-  if (/ท้องฟ้า|sky|เมฆ|cloud|พระอาทิตย์|sunset|sunrise/.test(t)) parts.push('dramatic sky clouds golden light');
-  if (/แม่น้ำ|river|น้ำตก|waterfall|lake|ทะเลสาบ/.test(t))       parts.push('flowing river waterfall nature');
-  if (/เมือง|city|ตึก|building|skyscraper/.test(t))               parts.push('city skyline urban architecture');
-  if (/ดาว|star|อวกาศ|space|galaxy|จักรวาล/.test(t))             parts.push('galaxy stars night sky cosmos');
-  if (/ไฟ|fire|เปลวไฟ|flame/.test(t))                             parts.push('dramatic fire flames dark background');
-  if (/น้ำ|water|หยด|drop|ฝน|rain/.test(t))                      parts.push('water reflections drops dramatic');
-  if (/สิงโต|lion|เสือ|tiger|หมี|bear|สัตว์|animal/.test(t))     parts.push('majestic wild animal dramatic portrait');
-  if (/ดอกไม้|flower|กุหลาบ|rose|lotus|บัว/.test(t))            parts.push('beautiful flowers macro photography');
+  // ── ธรรมชาติ / สถานที่ (abstract/atmospheric — no figurative objects) ──
+  if (/ต้นไม้|tree|ป่า|forest|jungle|สวน|garden/.test(t))         parts.push('lush green bokeh abstract dappled light through leaves texture');
+  if (/ภูเขา|mountain|เขา|peak|ยอด/.test(t))                      parts.push('dramatic mountain mist abstract aerial dark gradient');
+  if (/ทะเล|sea|ocean|คลื่น|wave|ชายหาด|beach/.test(t))           parts.push('dark deep ocean water surface abstract bokeh blue teal');
+  if (/ท้องฟ้า|sky|เมฆ|cloud|พระอาทิตย์|sunset|sunrise/.test(t)) parts.push('abstract golden sunset sky bokeh clouds glow warm');
+  if (/แม่น้ำ|river|น้ำตก|waterfall|lake|ทะเลสาบ/.test(t))       parts.push('dark water surface ripple abstract blue bokeh reflection');
+  if (/เมือง|city|ตึก|building|skyscraper/.test(t))               parts.push('city light bokeh abstract dark night neon blur');
+  if (/ดาว|star|อวกาศ|space|galaxy|จักรวาล/.test(t))             parts.push('deep space galaxy abstract dark blue purple bokeh stars');
+  if (/ไฟ|fire|เปลวไฟ|flame/.test(t))                             parts.push('abstract fire glow orange amber bokeh dark background');
+  if (/น้ำ|water|หยด|drop|ฝน|rain/.test(t))                      parts.push('dark water drops macro abstract blue bokeh');
+  if (/ดอกไม้|flower|กุหลาบ|rose|lotus|บัว/.test(t))            parts.push('dark floral bokeh abstract macro soft pink gold');
 
   // ── เทคโนโลยี / ธุรกิจ ──
   if (/ai|ปัญญาประดิษฐ์|digital|เทคโนโลยี|tech|software|data/.test(t))
-    parts.push('futuristic technology circuit board neon blue abstract');
-  if (/รัฐ|กระทรวง|พรรค|นโยบาย|รัฐบาล|งบ|ล้าน/.test(t))
-    parts.push('grand government hall parliament architecture dramatic');
+    parts.push('dark neon blue abstract tech circuit pattern digital glow bokeh');
+  if (/รัฐ|กระทรวง|พรรค|นโยบาย|รัฐบาล|งบ|ล้าน|ราชการ|ข้าราชการ|หน่วยงาน|สำนักงาน|ราษฎร|ประชาชน|สภา|รมว|รมต|นายก|รัฐมนตรี|สาธารณะ|ส่วนราชการ/.test(t))
+    parts.push('dark luxury warm amber golden vertical light bokeh abstract atmospheric');
   if (/เงิน|finance|bank|ธนาคาร|หุ้น|ลงทุน/.test(t))
-    parts.push('financial district glass buildings city lights');
+    parts.push('dark abstract gold financial bokeh city lights blur');
   if (/ศึกษา|โรงเรียน|หนังสือ|study|education/.test(t))
-    parts.push('library bookshelves warm wood academic');
+    parts.push('dark warm library bokeh abstract book texture wood');
   if (/สุขภาพ|โรงพยาบาล|แพทย์|hospital/.test(t))
-    parts.push('modern hospital clean minimal white blue');
+    parts.push('clean white blue abstract medical soft bokeh light');
   if (/ประชุม|conference|meeting/.test(t))
-    parts.push('conference room professional modern interior');
+    parts.push('dark professional abstract bokeh interior warm light');
 
   if (parts.length > 0) return parts.join(', ');
 
-  // Fallback: ใช้คำจากข้อความแปลงเป็น keyword ตรงๆ
-  return 'dramatic cinematic landscape atmospheric professional photography';
+  // Fallback: dark luxury abstract (guaranteed bird-free)
+  return 'dark luxury warm amber golden bokeh abstract atmospheric background, no subjects no figures';
 }
 
 // Rule-based fallback (ใช้ตอนไม่มี Claude API key)
@@ -490,36 +495,61 @@ Rules: NO text, NO people, NO faces, NO logos`;
 let pendingBGImg = null;
 let genStyleIdx  = 0;
 const BG_STYLES  = [
-  { label: 'Dark & Cinematic',  style: 'dark moody cinematic dramatic shadows sharp detailed photography' },
-  { label: 'Golden Hour',       style: 'golden hour warm sunlight glowing sharp clear photography' },
-  { label: 'Atmospheric',       style: 'atmospheric wide angle dramatic sky sharp focus photography' },
-  { label: 'Bold & Vivid',      style: 'vivid saturated colors high contrast sharp detailed bold' },
+  { label: 'ทองอัมเบอร์',  style: 'dark luxury background, warm amber golden vertical light rays bokeh, atmospheric moody, abstract wallpaper, no subjects no figures' },
+  { label: 'หินดำทอง',    style: 'dark polished black marble stone texture close-up, golden veins pattern fills frame, luxury surface macro photography' },
+  { label: 'แสงทองหรู',   style: 'deep dark background, glowing golden bokeh circles orbs, dreamy abstract luxury atmosphere, no subjects no figures' },
+  { label: 'ไหมแดงทอง',   style: 'deep crimson dark silk fabric texture close-up, golden thread weave pattern fills frame, luxury Thai textile macro photography' },
 ];
 
-function genOneBG() {
+function saveHFToken() {
+  const t = document.getElementById('hfTokenInput').value.trim();
+  if (!t) return;
+  localStorage.setItem('hf_token', t);
+  document.getElementById('hfTokenSection').style.display = 'none';
+  setGenStatus('✅ บันทึก Token แล้ว — กด Auto Gen อีกครั้ง', '#3daa6e');
+}
+
+async function genOneBG() {
   const text = document.getElementById('textInput').value.trim();
   if (!text) {
     setGenStatus('⚠️ พิมพ์ข้อความในการ์ดก่อน', '#e94560'); return;
   }
-  const W = L.template ? L.template.naturalWidth  : 1080;
-  const H = L.template ? L.template.naturalHeight : 1350;
-  const btn = document.getElementById('genBtn');
+
+  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
+  // GitHub Pages — AI gen ต้องการ server proxy (ไม่มีบน static host)
+  if (!isLocal) {
+    setGenStatus('⚠️ AI Gen ใช้ได้บน localhost เท่านั้น — ใช้ปุ่ม Gemini แทน', '#e85d04');
+    document.getElementById('bgPreview').innerHTML =
+      `<div class="spin"><span>💡</span><span class="dot" style="font-size:12px">กด Gemini เพื่อสร้างรูป</span></div>`;
+    return;
+  }
+
+  const hfToken = localStorage.getItem('hf_token') || '';
+  const btn  = document.getElementById('genBtn');
   const prev = document.getElementById('bgPreview');
 
-  // สลับ style วนไปเรื่อยๆ
   const { label, style } = BG_STYLES[genStyleIdx % BG_STYLES.length];
   genStyleIdx++;
 
   btn.disabled = true;
   btn.innerHTML = '⏳ 0s';
   prev.innerHTML = `<div class="spin"><span>🎨</span><span id="timerDisplay" class="dot" style="font-size:22px;font-weight:700;color:#e85d04">0s</span><span class="dot">${label}…</span></div>`;
-  setGenStatus('', '#e85d04');
+  setGenStatus('วิเคราะห์ข้อความ…', '#e85d04');
 
-  const scene  = extractBGScene(text);
-  const seed   = Math.floor(Math.random() * 999999);
-  const prompt = `${scene}, ${style}, professional photography background, no text no words no letters no faces no people`;
-  // Direct load — Pollinations.ai รองรับ CORS
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${W}&height=${H}&seed=${seed}&enhance=true`;
+  // ให้ Claude วิเคราะห์ข้อความแล้วสร้าง image prompt ที่ตรงเนื้อหา
+  let scene = extractBGScene(text);
+  try {
+    const r = await fetch('/gen-bg-prompt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    if (r.ok) { const d = await r.json(); if (d.bgPrompt) scene = d.bgPrompt; }
+  } catch(e) { /* fallback to extractBGScene */ }
+
+  setGenStatus('กำลังสร้างรูป…', '#e85d04');
+  const prompt = `${scene}, ${style}, no text no words no letters no faces no people`;
 
   let elapsed = 0;
   const timer = setInterval(() => {
@@ -529,33 +559,78 @@ function genOneBG() {
     if (td) td.textContent = elapsed + 's';
   }, 1000);
 
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
+  try {
+    let imgSrc = null;
 
-  img.onload = () => {
+    if (isLocal) {
+      // localhost: server proxy (tries Pollinations → HF api-inference, no CORS issues)
+      const r = await fetch('/gen-bg-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+      if (!r.ok) { const t = await r.text(); throw new Error(`${r.status}: ${t.slice(0,100)}`); }
+      const d = await r.json();
+      imgSrc = d.image;
+    } else {
+      // GitHub Pages: direct HF router call (needs token)
+      let res, attempt = 0;
+      while (attempt < 3) {
+        res = await fetch('https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-3-medium-diffusers', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${hfToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            inputs: prompt,
+            parameters: {
+              width: 832, height: 1216,
+              guidance_scale: 7,
+              num_inference_steps: 28,
+              negative_prompt: 'people, person, face, human, crowd, flag, flags, national flag, country flag, banner, text, letters, words, numbers, watermark, logo, signature, blurry, low quality, distorted, ugly, deformed, anime, flat design, bird, birds, animal, animals, wildlife, creature, creatures, insect, fish, cat, dog, horse, elephant, living being'
+            }
+          })
+        });
+        if (res.status === 503) {
+          attempt++;
+          setGenStatus(`Model กำลังโหลด… ลองใหม่ ${attempt}/3`, '#e85d04');
+          await new Promise(r => setTimeout(r, 8000));
+        } else break;
+      }
+      if (!res.ok) { const t = await res.text(); throw new Error(`${res.status}: ${t.slice(0,100)}`); }
+      const blob = await res.blob();
+      imgSrc = URL.createObjectURL(blob);
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      clearInterval(timer);
+      pendingBGImg = img;
+      prev.innerHTML = `<img src="${img.src}"><div class="style-tag">${label}</div>`;
+      btn.disabled = false; btn.innerHTML = '🔄 สร้างใหม่';
+      setGenStatus(`✅ ${label} — ${elapsed}s`, '#3daa6e');
+      L.bg = img;
+      document.getElementById('bgChip').classList.add('loaded');
+      document.getElementById('bgName').textContent = '✨ AI Generated';
+      render();
+    };
+    img.onerror = () => {
+      clearInterval(timer);
+      prev.innerHTML = `<div class="spin"><span>❌</span><span class="dot">โหลดรูปล้มเหลว</span></div>`;
+      btn.disabled = false; btn.innerHTML = '🔄 ลองใหม่';
+      setGenStatus('❌ โหลดรูปล้มเหลว', '#e94560');
+    };
+    img.src = imgSrc;
+
+  } catch(e) {
     clearInterval(timer);
-    pendingBGImg = img;
-    prev.innerHTML = `<img src="${img.src}"><div class="style-tag">${label}</div>`;
-    btn.disabled = false;
-    btn.innerHTML = '🔄 สร้างใหม่';
-    setGenStatus(`✅ ${label} — ${elapsed}s`, '#3daa6e');
-    // ใส่เป็น BG ทันที
-    L.bg = img;
-    document.getElementById('bgChip').classList.add('loaded');
-    document.getElementById('bgName').textContent = '✨ AI Generated';
-    render();
-  };
-
-  img.onerror = () => {
-    clearInterval(timer);
-    pendingBGImg = null;
-    prev.innerHTML = `<div class="spin"><span>❌</span><span class="dot">ล้มเหลว — กด "สร้างใหม่"</span></div>`;
-    btn.disabled = false;
-    btn.innerHTML = '🔄 ลองใหม่';
-    setGenStatus('❌ ล้มเหลว ลองกดสร้างใหม่อีกครั้ง', '#e94560');
-  };
-
-  img.src = url;
+    const msg = e.message.includes('401') ? 'Token ไม่ถูกต้อง — ตรวจสอบอีกครั้ง' : e.message.slice(0, 80);
+    prev.innerHTML = `<div class="spin"><span>❌</span><span class="dot">${msg}</span></div>`;
+    btn.disabled = false; btn.innerHTML = '🔄 ลองใหม่';
+    setGenStatus('❌ ' + msg, '#e94560');
+    if (e.message.includes('401')) {
+      localStorage.removeItem('hf_token');
+      document.getElementById('hfTokenSection').style.display = '';
+    }
+  }
 }
 
 function usePendingBG() {
@@ -1087,8 +1162,16 @@ window.addEventListener('load', async () => {
   tryAutoLoadTemplate();
   initCanvasEvents();
   render();
-  // Responsive: re-render on container resize
   new ResizeObserver(render).observe(document.getElementById('previewPane'));
+  // โหลด HF token จาก local server อัตโนมัติ (ใช้เฉพาะ localhost)
+  if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+    try {
+      const cfg = await fetch('/local-config').then(r => r.json());
+      if (cfg.hfToken && !localStorage.getItem('hf_token')) {
+        localStorage.setItem('hf_token', cfg.hfToken);
+      }
+    } catch(e) {}
+  }
 });
 </script>
 </body>
