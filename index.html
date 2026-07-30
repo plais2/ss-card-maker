@@ -578,7 +578,7 @@ async function genOneBG() {
   } catch(e) { /* fallback to extractBGScene */ }
 
   setGenStatus('กำลังสร้างรูป…', '#e85d04');
-  const prompt = `${scene}, ${style}, ${GOV_STYLE}, no text no words no letters no faces no people no animals no flags no emblems no living beings`;
+  const prompt = `${scene}, ${style}, ${GOV_STYLE}, uninhabited, no living beings, no people no humans no figures no silhouettes no faces no animals no birds no insects no creatures no plants no flags no emblems no text no words`;
 
   let elapsed = 0;
   const timer = setInterval(() => {
@@ -606,9 +606,11 @@ async function genOneBG() {
       // Pollinations cache รูปแล้ว → weserv.nl fetch เร็ว → ได้ CORS-safe dataURL
       const seed = Math.floor(Math.random() * 999983);
       const neg = encodeURIComponent(
-        'people, person, face, human, crowd, ' +
-        'bird, birds, animal, animals, wildlife, creature, living being, ' +
-        'insect, insects, butterfly, fish, cat, dog, horse, ' +
+        'people, person, man, woman, men, women, human, humans, face, faces, ' +
+        'figure, figures, silhouette, portrait, body, hand, hands, crowd, ' +
+        'bird, birds, animal, animals, wildlife, creature, creatures, living being, living beings, organism, ' +
+        'insect, insects, bee, fly, butterfly, fish, cat, dog, horse, cow, elephant, ' +
+        'plant, plants, tree, grass, flower, ' +
         'flag, flags, banner, emblem, coat of arms, crest, insignia, ' +
         'text, letters, words, watermark, logo, blurry, distorted, anime'
       );
