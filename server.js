@@ -120,12 +120,12 @@ function callClaudeForBGPrompt(text) {
     const prompt = `ข้อความนี้จะใช้บนการ์ดโซเชียลมีเดียสไตล์ราชการไทย:
 "${text}"
 
-สร้าง English image prompt สำหรับ AI วาด 3D render ในสไตล์ Thai official โดย:
-- ระบุ symbolic objects 3-4 ชิ้นที่สื่อถึงเนื้อหา เช่น ตราชู นาฬิกาทราย เอกสาร ตรายาง เหรียญ พระขรรค์ ฯลฯ
-- วางบนโต๊ะไม้มะฮอกกานีในฮอลล์ราชการไทย เสาหินทอง
-- ห้ามมีคน ใบหน้า ธง ตัวอักษร และห้ามใช้คำ flag/banner/sign/people/person ในคำตอบ
+สร้าง English image prompt สำหรับ AI วาด background ที่:
+- สื่อถึงเนื้อหาด้วย symbolic scene (ไม่ใช่ object ลอยๆ) เช่น โต๊ะทำงาน ห้องประชุม ชั้นเอกสาร สถาปัตยกรรม
+- สไตล์: official government style, institutional architecture, symmetrical formal composition, Thai neo-classical architecture, minimalist kanok motifs, gold and white tone, navy blue and gold, polished marble and brass
+- ห้ามมีคน ใบหน้า สัตว์ นก ธง ตรา ตัวอักษร และห้ามใช้คำ flag/banner/sign/people/person/animal/bird/emblem/coat of arms ในคำตอบ
 
-ตอบเฉพาะ English prompt ไม่เกิน 40 คำ`;
+ตอบเฉพาะ English prompt ไม่เกิน 45 คำ`;
 
     const body = JSON.stringify({
       model: 'claude-haiku-4-5',
@@ -187,7 +187,7 @@ function fetchPollinationsImage(prompt) {
   return new Promise((resolve, reject) => {
     const encoded = encodeURIComponent(prompt);
     const seed = Math.floor(Date.now() % 99999);
-    const neg = encodeURIComponent('people, person, face, human, bird, birds, animal, animals, wildlife, creature, flag, flags, banner, text, letters, watermark, logo, blurry, distorted, anime');
+    const neg = encodeURIComponent('people, person, face, human, bird, birds, animal, animals, wildlife, creature, living beings, flag, flags, banner, emblem, emblems, coat of arms, crest, insignia, text, letters, watermark, logo, blurry, distorted, anime');
     const reqPath = `/prompt/${encoded}?width=832&height=1216&nologo=true&seed=${seed}&model=flux-realism&negative=${neg}`;
     const opts = {
       hostname: 'image.pollinations.ai', path: reqPath, method: 'GET',

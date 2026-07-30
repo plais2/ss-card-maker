@@ -494,6 +494,23 @@ Rules: NO text, NO people, NO faces, NO logos`;
 
 let pendingBGImg = null;
 let genStyleIdx  = 0;
+
+// Keywords ดึงคุณภาพสไตล์ราชการไทยในทุก prompt
+const GOV_STYLE = [
+  'official government style',
+  'institutional architecture',
+  'symmetrical formal composition',
+  'authoritative prestigious',
+  'Thai neo-classical architecture',
+  'modern Thai traditional architectural details',
+  'minimalist kanok motifs',
+  'engraved geometric Thai patterns',
+  'gold and white tone',
+  'navy blue and gold',
+  'polished marble and brass',
+  'clean and structured',
+].join(', ');
+
 const BG_STYLES  = [
   { label: 'โต๊ะราชการ',   style: 'overhead top-down view of Thai government official desk, towering stacks of thick manila folders and official documents tied with red ribbon, rubber stamp, government seal stamp pad, dark wooden desk surface, no people, bureaucratic paper pile macro photography hyper-realistic' },
   { label: 'ห้องประชุม',   style: 'empty Thai government conference room interior, long dark polished mahogany table with stacked official documents name plates and water glasses, no people, formal meeting room wide angle photography hyper-realistic' },
@@ -549,7 +566,7 @@ async function genOneBG() {
   } catch(e) { /* fallback to extractBGScene */ }
 
   setGenStatus('กำลังสร้างรูป…', '#e85d04');
-  const prompt = `${scene}, ${style}, no text no words no letters no faces no people`;
+  const prompt = `${scene}, ${style}, ${GOV_STYLE}, no text no words no letters no faces no people no animals no flags no emblems no living beings`;
 
   let elapsed = 0;
   const timer = setInterval(() => {
