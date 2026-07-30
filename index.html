@@ -594,7 +594,8 @@ async function genOneBG() {
       const d = await r.json();
       imgSrc = d.image;
     } else {
-      // GitHub Pages: weserv.nl proxy → CORS-safe fetch (Pollinations block browser fetch โดยตรง)
+      // GitHub Pages: img tag โหลดก่อน (ไม่มี timeout) → เมื่อโหลดเสร็จ
+      // Pollinations cache รูปแล้ว → weserv.nl fetch เร็ว → ได้ CORS-safe dataURL
       const seed = (Date.now() % 99999) | 0;
       const neg = encodeURIComponent(
         'people, person, face, human, crowd, ' +
@@ -605,14 +606,28 @@ async function genOneBG() {
       );
       const polUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
         `?width=832&height=1216&nologo=true&seed=${seed}&model=flux-realism&negative=${neg}`;
-      const proxyUrl = 'https://images.weserv.nl/?url=' + encodeURIComponent(polUrl);
 
-      const resp = await fetch(proxyUrl);
-      if (!resp.ok) throw new Error(`weserv ${resp.status}`);
-      const blob = await resp.blob();
-      imgSrc = await new Promise(res => {
-        const fr = new FileReader(); fr.onload = e => res(e.target.result); fr.readAsDataURL(blob);
+      // Step 1: img tag รอรูป generate เสร็จ (no timeout)
+      await new Promise((resolve, reject) => {
+        const pImg = new Image();
+        pImg.onload = resolve;
+        pImg.onerror = () => reject(new Error('Pollinations ไม่ตอบสนอง'));
+        pImg.src = polUrl;
       });
+
+      // Step 2: รูป cache แล้ว → weserv fetch เร็ว → CORS-safe dataURL สำหรับ download
+      try {
+        const proxyUrl = 'https://images.weserv.nl/?url=' + encodeURIComponent(polUrl);
+        const resp = await fetch(proxyUrl);
+        if (!resp.ok) throw new Error(`weserv ${resp.status}`);
+        const blob = await resp.blob();
+        imgSrc = await new Promise(res => {
+          const fr = new FileReader(); fr.onload = e => res(e.target.result); fr.readAsDataURL(blob);
+        });
+      } catch(e) {
+        // weserv ล้มเหลว — ใช้ URL โดยตรง (preview ใช้ได้ download อาจ taint)
+        imgSrc = polUrl;
+      }
     }
 
     const img = new Image();
