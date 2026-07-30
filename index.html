@@ -400,39 +400,47 @@ function loadLayer(input, type) {
 //  AI GENERATE BG (Pollinations.ai)
 // ══════════════════════════════════════════
 
-// วิเคราะห์ scene จากข้อความ — ตรวจทั้งคำไทยและอังกฤษ
+// วิเคราะห์ scene จากข้อความ — ดึง keyword เฉพาะจากเนื้อหาโดยตรง
 function extractBGScene(text) {
   const t = text.toLowerCase();
   const parts = [];
 
-  // ── ธรรมชาติ / สถานที่ (abstract/atmospheric — no figurative objects) ──
-  if (/ต้นไม้|tree|ป่า|forest|jungle|สวน|garden/.test(t))         parts.push('lush green bokeh abstract dappled light through leaves texture');
-  if (/ภูเขา|mountain|เขา|peak|ยอด/.test(t))                      parts.push('dramatic mountain mist abstract aerial dark gradient');
-  if (/ทะเล|sea|ocean|คลื่น|wave|ชายหาด|beach/.test(t))           parts.push('dark deep ocean water surface abstract bokeh blue teal');
-  if (/ท้องฟ้า|sky|เมฆ|cloud|พระอาทิตย์|sunset|sunrise/.test(t)) parts.push('abstract golden sunset sky bokeh clouds glow warm');
-  if (/แม่น้ำ|river|น้ำตก|waterfall|lake|ทะเลสาบ/.test(t))       parts.push('dark water surface ripple abstract blue bokeh reflection');
-  if (/เมือง|city|ตึก|building|skyscraper/.test(t))               parts.push('city light bokeh abstract dark night neon blur');
-  if (/ดาว|star|อวกาศ|space|galaxy|จักรวาล/.test(t))             parts.push('deep space galaxy abstract dark blue purple bokeh stars');
-  if (/ไฟ|fire|เปลวไฟ|flame/.test(t))                             parts.push('abstract fire glow orange amber bokeh dark background');
-  if (/น้ำ|water|หยด|drop|ฝน|rain/.test(t))                      parts.push('dark water drops macro abstract blue bokeh');
-  if (/ดอกไม้|flower|กุหลาบ|rose|lotus|บัว/.test(t))            parts.push('dark floral bokeh abstract macro soft pink gold');
+  // ── กระทรวง / หน่วยงานเฉพาะ ──
+  if (/กระทรวงการคลัง|คลัง|งบประมาณ/.test(t))
+    parts.push('official financial budget documents stacked on mahogany desk, golden Thai government seal stamp pad, dark wood surface');
+  else if (/กระทรวงศึกษา|ศธ|โรงเรียน|มหาวิทยาลัย/.test(t))
+    parts.push('official education ministry documents, academic journals stacked on government desk');
+  else if (/กระทรวงกลาโหม|ทหาร|กองทัพ/.test(t))
+    parts.push('dark polished military conference room, official defense documents on table');
+  else if (/กระทรวงสาธารณสุข|สธ|โรงพยาบาล|แพทย์/.test(t))
+    parts.push('clean white blue official medical ministry setting, health policy documents');
+  else if (/กระทรวง|หน่วยงาน|สำนักงาน|กรม|สภา/.test(t))
+    parts.push('Thai government ministry official desk, institutional administrative setting');
 
-  // ── เทคโนโลยี / ธุรกิจ ──
-  if (/ai|ปัญญาประดิษฐ์|digital|เทคโนโลยี|tech|software|data/.test(t))
+  // ── เหตุการณ์ / การกระทำ ──
+  if (/ประชุม|เห็นชอบ|ลงมติ|โหวต|มีมติ|อภิปราย/.test(t))
+    parts.push('empty Thai government conference room, long polished mahogany table, stacked documents, name plates');
+  if (/อนุมัติ|อนุญาต|ลงนาม|ลงชื่อ|เซ็น/.test(t))
+    parts.push('official approval document with government stamp pad, red wax seal, dark desk');
+  if (/กฎหมาย|พรบ|ระเบียบ|ประกาศ|คำสั่ง|ราชกิจจา/.test(t))
+    parts.push('rows of thick official Thai law document binders on metal government shelves');
+  if (/จัดสรร|งบ|ล้าน|พัน|ล้านล้าน|บาท/.test(t))
+    parts.push('overhead view of budget allocation papers, financial figures on official documents, rubber stamp');
+
+  // ── ธรรมชาติ / สถานที่ ──
+  if (/ต้นไม้|tree|ป่า|forest/.test(t))   parts.push('lush green bokeh abstract dappled light through leaves texture');
+  if (/ทะเล|sea|ocean|ชายหาด/.test(t))    parts.push('dark deep ocean water surface abstract bokeh blue teal');
+  if (/ท้องฟ้า|sky|เมฆ|cloud/.test(t))    parts.push('abstract golden sky bokeh clouds glow warm');
+  if (/ดาว|star|อวกาศ|space/.test(t))     parts.push('deep space galaxy abstract dark blue purple bokeh stars');
+  if (/เมือง|city|ตึก|building/.test(t))  parts.push('city light bokeh abstract dark night neon blur');
+
+  // ── เทคโนโลยี ──
+  if (/ai|ปัญญาประดิษฐ์|digital|เทคโนโลยี|tech|software/.test(t))
     parts.push('dark neon blue abstract tech circuit pattern digital glow bokeh');
-  if (/รัฐ|กระทรวง|พรรค|นโยบาย|รัฐบาล|งบ|ล้าน|ราชการ|ข้าราชการ|หน่วยงาน|สำนักงาน|ราษฎร|ประชาชน|สภา|รมว|รมต|นายก|รัฐมนตรี|สาธารณะ|ส่วนราชการ/.test(t))
-    parts.push('Thai official government atmosphere, formal administrative setting, institutional');
   if (/เงิน|finance|bank|ธนาคาร|หุ้น|ลงทุน/.test(t))
-    parts.push('dark abstract gold financial bokeh city lights blur');
-  if (/ศึกษา|โรงเรียน|หนังสือ|study|education/.test(t))
-    parts.push('dark warm library bokeh abstract book texture wood');
-  if (/สุขภาพ|โรงพยาบาล|แพทย์|hospital/.test(t))
-    parts.push('clean white blue abstract medical soft bokeh light');
-  if (/ประชุม|conference|meeting/.test(t))
-    parts.push('dark professional abstract bokeh interior warm light');
+    parts.push('dark abstract gold financial bokeh, polished marble surface');
 
-  if (parts.length > 0) return parts.join(', ');
-
+  if (parts.length > 0) return parts.slice(0, 2).join(', ');
   return 'Thai official government atmosphere, formal institutional setting';
 }
 
