@@ -421,7 +421,7 @@ function extractBGScene(text) {
   if (/ai|ปัญญาประดิษฐ์|digital|เทคโนโลยี|tech|software|data/.test(t))
     parts.push('dark neon blue abstract tech circuit pattern digital glow bokeh');
   if (/รัฐ|กระทรวง|พรรค|นโยบาย|รัฐบาล|งบ|ล้าน|ราชการ|ข้าราชการ|หน่วยงาน|สำนักงาน|ราษฎร|ประชาชน|สภา|รมว|รมต|นายก|รัฐมนตรี|สาธารณะ|ส่วนราชการ/.test(t))
-    parts.push('dark luxury warm amber golden vertical light bokeh abstract atmospheric');
+    parts.push('extreme close-up ornate golden Thai official column carved stone kalalatop pattern, dark dramatic background, macro architectural photography');
   if (/เงิน|finance|bank|ธนาคาร|หุ้น|ลงทุน/.test(t))
     parts.push('dark abstract gold financial bokeh city lights blur');
   if (/ศึกษา|โรงเรียน|หนังสือ|study|education/.test(t))
@@ -434,7 +434,7 @@ function extractBGScene(text) {
   if (parts.length > 0) return parts.join(', ');
 
   // Fallback: dark luxury abstract (guaranteed bird-free)
-  return 'dark luxury warm amber golden bokeh abstract atmospheric background, no subjects no figures';
+  return 'extreme close-up ornate golden Thai official column carved stone kalalatop pattern, dark dramatic background, macro architectural photography';
 }
 
 // Rule-based fallback (ใช้ตอนไม่มี Claude API key)
@@ -495,10 +495,10 @@ Rules: NO text, NO people, NO faces, NO logos`;
 let pendingBGImg = null;
 let genStyleIdx  = 0;
 const BG_STYLES  = [
-  { label: 'ทองอัมเบอร์',  style: 'dark luxury background, warm amber golden vertical light rays bokeh, atmospheric moody, abstract wallpaper, no subjects no figures' },
-  { label: 'หินดำทอง',    style: 'dark polished black marble stone texture close-up, golden veins pattern fills frame, luxury surface macro photography' },
-  { label: 'แสงทองหรู',   style: 'deep dark background, glowing golden bokeh circles orbs, dreamy abstract luxury atmosphere, no subjects no figures' },
-  { label: 'ไหมแดงทอง',   style: 'deep crimson dark silk fabric texture close-up, golden thread weave pattern fills frame, luxury Thai textile macro photography' },
+  { label: 'เสาทองราชการ', style: 'extreme close-up of ornate golden Thai official column capital, intricate carved stone relief kalalatop pattern, dark shadow background, macro architectural photography hyper-realistic' },
+  { label: 'เพดานฮอลล์',  style: 'looking straight up at gilded Thai government hall ceiling dome, golden geometric pattern radiating outward, ornate molding, wide angle architectural photography hyper-realistic' },
+  { label: 'พื้นหินอ่อน', style: 'overhead top-down view of grand marble floor, golden Thai ornamental inlay mosaic pattern, polished reflective surface, architectural photography hyper-realistic' },
+  { label: 'ลายไทยทอง',   style: 'close-up of deep crimson Thai official silk fabric, intricate gold kalalatop woven pattern fills entire frame, luxury textile macro photography hyper-realistic' },
 ];
 
 function saveHFToken() {
