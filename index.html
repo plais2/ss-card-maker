@@ -545,15 +545,6 @@ async function genOneBG() {
 
   const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
-  // GitHub Pages — AI gen ต้องการ server proxy (ไม่มีบน static host)
-  if (!isLocal) {
-    setGenStatus('⚠️ AI Gen ใช้ได้บน localhost เท่านั้น — ใช้ปุ่ม Gemini แทน', '#e85d04');
-    document.getElementById('bgPreview').innerHTML =
-      `<div class="spin"><span>💡</span><span class="dot" style="font-size:12px">กด Gemini เพื่อสร้างรูป</span></div>`;
-    return;
-  }
-
-  const hfToken = localStorage.getItem('hf_token') || '';
   const btn  = document.getElementById('genBtn');
   const prev = document.getElementById('bgPreview');
 
@@ -603,31 +594,25 @@ async function genOneBG() {
       const d = await r.json();
       imgSrc = d.image;
     } else {
-      // GitHub Pages: direct HF router call (needs token)
-      let res, attempt = 0;
-      while (attempt < 3) {
-        res = await fetch('https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-3-medium-diffusers', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${hfToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            inputs: prompt,
-            parameters: {
-              width: 832, height: 1216,
-              guidance_scale: 7,
-              num_inference_steps: 28,
-              negative_prompt: 'people, person, face, human, crowd, flag, flags, national flag, country flag, banner, text, letters, words, numbers, watermark, logo, signature, blurry, low quality, distorted, ugly, deformed, anime, flat design, bird, birds, animal, animals, wildlife, creature, creatures, insect, fish, cat, dog, horse, elephant, living being'
-            }
-          })
-        });
-        if (res.status === 503) {
-          attempt++;
-          setGenStatus(`Model กำลังโหลด… ลองใหม่ ${attempt}/3`, '#e85d04');
-          await new Promise(r => setTimeout(r, 8000));
-        } else break;
-      }
-      if (!res.ok) { const t = await res.text(); throw new Error(`${res.status}: ${t.slice(0,100)}`); }
-      const blob = await res.blob();
-      imgSrc = URL.createObjectURL(blob);
+      // GitHub Pages: weserv.nl proxy → CORS-safe fetch (Pollinations block browser fetch โดยตรง)
+      const seed = (Date.now() % 99999) | 0;
+      const neg = encodeURIComponent(
+        'people, person, face, human, crowd, ' +
+        'bird, birds, animal, animals, wildlife, creature, living being, ' +
+        'insect, insects, butterfly, fish, cat, dog, horse, ' +
+        'flag, flags, banner, emblem, coat of arms, crest, insignia, ' +
+        'text, letters, words, watermark, logo, blurry, distorted, anime'
+      );
+      const polUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
+        `?width=832&height=1216&nologo=true&seed=${seed}&model=flux-realism&negative=${neg}`;
+      const proxyUrl = 'https://images.weserv.nl/?url=' + encodeURIComponent(polUrl);
+
+      const resp = await fetch(proxyUrl);
+      if (!resp.ok) throw new Error(`weserv ${resp.status}`);
+      const blob = await resp.blob();
+      imgSrc = await new Promise(res => {
+        const fr = new FileReader(); fr.onload = e => res(e.target.result); fr.readAsDataURL(blob);
+      });
     }
 
     const img = new Image();
