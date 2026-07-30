@@ -531,10 +531,10 @@ const GOV_STYLE = [
 ].join(', ');
 
 const BG_STYLES  = [
-  { label: 'โต๊ะราชการ',   style: 'overhead top-down view of Thai government official desk, towering stacks of thick manila folders and official documents tied with red ribbon, rubber stamp, government seal stamp pad, dark wooden desk surface, no people, bureaucratic paper pile macro photography hyper-realistic' },
-  { label: 'ห้องประชุม',   style: 'empty Thai government conference room interior, long dark polished mahogany table with stacked official documents name plates and water glasses, no people, formal meeting room wide angle photography hyper-realistic' },
-  { label: 'ชั้นแฟ้มงาน', style: 'close-up of government office metal filing shelves packed with rows of thick official red-spine document binders and manila folders, bureaucratic archive wall, no people, depth of field macro photography hyper-realistic' },
-  { label: 'เสาทองราชการ', style: 'extreme close-up of ornate golden Thai official column capital, intricate carved stone relief kalalatop pattern, dark shadow background, macro architectural photography hyper-realistic' },
+  { label: 'โต๊ะราชการ',   style: 'overhead top-down view of Thai government official desk, towering stacks of thick manila folders and official documents, red rubber stamp, government seal pad, dark wooden desk surface, no ribbon no bow no decoration, no people, bureaucratic paper pile macro photography hyper-realistic' },
+  { label: 'ห้องประชุม',   style: 'empty Thai government conference room interior, long dark polished mahogany table with stacked official documents name plates and water glasses, no people, no columns, formal meeting room wide angle photography hyper-realistic' },
+  { label: 'ชั้นแฟ้มงาน', style: 'close-up of government office metal filing shelves packed with rows of thick official document binders and manila folders, bureaucratic archive wall, no people, no ribbon, depth of field macro photography hyper-realistic' },
+  { label: 'ตรายางราชการ', style: 'extreme close-up of official Thai government rubber stamp collection on dark wooden tray, red ink stamp pads, official seal press, stacked document papers, no people, macro photography hyper-realistic' },
 ];
 
 function saveHFToken() {
@@ -611,6 +611,8 @@ async function genOneBG() {
         'bird, birds, animal, animals, wildlife, creature, creatures, living being, living beings, organism, ' +
         'insect, insects, bee, fly, butterfly, fish, cat, dog, horse, cow, elephant, ' +
         'plant, plants, tree, grass, flower, ' +
+        'ribbon, ribbons, bow, bows, decoration, decorations, garland, wreath, ' +
+        'column, columns, pillar, pillars, ' +
         'flag, flags, banner, emblem, coat of arms, crest, insignia, ' +
         'text, letters, words, watermark, logo, blurry, distorted, anime'
       );

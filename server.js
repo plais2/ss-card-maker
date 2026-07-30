@@ -187,7 +187,7 @@ function fetchPollinationsImage(prompt) {
   return new Promise((resolve, reject) => {
     const encoded = encodeURIComponent(prompt);
     const seed = Math.floor(Math.random() * 999983);
-    const neg = encodeURIComponent('people, person, man, woman, men, women, human, humans, face, faces, figure, figures, silhouette, portrait, body, hand, hands, crowd, bird, birds, animal, animals, wildlife, creature, creatures, living being, living beings, organism, insect, insects, bee, fly, butterfly, fish, cat, dog, horse, cow, elephant, plant, plants, tree, grass, flower, flag, flags, banner, emblem, coat of arms, crest, insignia, text, letters, watermark, logo, blurry, distorted, anime');
+    const neg = encodeURIComponent('people, person, man, woman, men, women, human, humans, face, faces, figure, figures, silhouette, portrait, body, hand, hands, crowd, bird, birds, animal, animals, wildlife, creature, creatures, living being, living beings, organism, insect, insects, bee, fly, butterfly, fish, cat, dog, horse, cow, elephant, plant, plants, tree, grass, flower, ribbon, ribbons, bow, bows, decoration, decorations, garland, wreath, column, columns, pillar, pillars, flag, flags, banner, emblem, coat of arms, crest, insignia, text, letters, watermark, logo, blurry, distorted, anime');
     const reqPath = `/prompt/${encoded}?width=832&height=1216&nologo=true&seed=${seed}&model=flux-realism&negative=${neg}`;
     const opts = {
       hostname: 'image.pollinations.ai', path: reqPath, method: 'GET',
