@@ -456,6 +456,7 @@ function ruleBasedFormat(text) {
 async function openGemini() {
   const text  = document.getElementById('textInput').value.trim();
   const scene = text ? extractBGScene(text) : 'dramatic cinematic landscape';
+  if (text && text !== lastGenText) { genStyleIdx = pickBGStyleIdx(text); lastGenText = text; }
   const { label, style } = BG_STYLES[genStyleIdx % BG_STYLES.length];
   genStyleIdx++;
 
@@ -494,6 +495,16 @@ Rules: NO text, NO people, NO faces, NO logos`;
 
 let pendingBGImg = null;
 let genStyleIdx  = 0;
+let lastGenText  = '';
+
+// เลือก BG_STYLE index ที่ตรงกับเนื้อหามากที่สุด
+function pickBGStyleIdx(text) {
+  const t = text.toLowerCase();
+  if (/ประชุม|เห็นชอบ|ลงมติ|โหวต|มีมติ|อภิปราย|สภา/.test(t)) return 1; // ห้องประชุม
+  if (/เอกสาร|กฎหมาย|พรบ|ระเบียบ|ประกาศ|คำสั่ง|หนังสือ|สั่งการ|ราชกิจจา/.test(t)) return 2; // ชั้นแฟ้มงาน
+  if (/งบ|เงิน|ล้าน|พัน|จัดสรร|ค่าใช้จ่าย|ภาษี|งบประมาณ|กระทรวงการคลัง|ธนาคาร/.test(t)) return 0; // โต๊ะราชการ
+  return 3; // เสาทองราชการ (default)
+}
 
 // Keywords ดึงคุณภาพสไตล์ราชการไทยในทุก prompt
 const GOV_STYLE = [
@@ -546,6 +557,8 @@ async function genOneBG() {
   const btn  = document.getElementById('genBtn');
   const prev = document.getElementById('bgPreview');
 
+  // content-aware: ถ้าข้อความเปลี่ยน ให้เริ่มจาก style ที่ match ก่อน แล้ววนต่อ
+  if (text !== lastGenText) { genStyleIdx = pickBGStyleIdx(text); lastGenText = text; }
   const { label, style } = BG_STYLES[genStyleIdx % BG_STYLES.length];
   genStyleIdx++;
 
