@@ -186,7 +186,7 @@ function ruleBasedFormat(text) {
 function fetchPollinationsImage(prompt) {
   return new Promise((resolve, reject) => {
     const encoded = encodeURIComponent(prompt);
-    const seed = Math.floor(Date.now() % 99999);
+    const seed = Math.floor(Math.random() * 999983);
     const neg = encodeURIComponent('people, person, face, human, bird, birds, animal, animals, wildlife, creature, living beings, flag, flags, banner, emblem, emblems, coat of arms, crest, insignia, text, letters, watermark, logo, blurry, distorted, anime');
     const reqPath = `/prompt/${encoded}?width=832&height=1216&nologo=true&seed=${seed}&model=flux-realism&negative=${neg}`;
     const opts = {

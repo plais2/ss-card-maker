@@ -421,7 +421,7 @@ function extractBGScene(text) {
   if (/ai|ปัญญาประดิษฐ์|digital|เทคโนโลยี|tech|software|data/.test(t))
     parts.push('dark neon blue abstract tech circuit pattern digital glow bokeh');
   if (/รัฐ|กระทรวง|พรรค|นโยบาย|รัฐบาล|งบ|ล้าน|ราชการ|ข้าราชการ|หน่วยงาน|สำนักงาน|ราษฎร|ประชาชน|สภา|รมว|รมต|นายก|รัฐมนตรี|สาธารณะ|ส่วนราชการ/.test(t))
-    parts.push('extreme close-up ornate golden Thai official column carved stone kalalatop pattern, dark dramatic background, macro architectural photography');
+    parts.push('Thai official government atmosphere, formal administrative setting, institutional');
   if (/เงิน|finance|bank|ธนาคาร|หุ้น|ลงทุน/.test(t))
     parts.push('dark abstract gold financial bokeh city lights blur');
   if (/ศึกษา|โรงเรียน|หนังสือ|study|education/.test(t))
@@ -433,8 +433,7 @@ function extractBGScene(text) {
 
   if (parts.length > 0) return parts.join(', ');
 
-  // Fallback: dark luxury abstract (guaranteed bird-free)
-  return 'extreme close-up ornate golden Thai official column carved stone kalalatop pattern, dark dramatic background, macro architectural photography';
+  return 'Thai official government atmosphere, formal institutional setting';
 }
 
 // Rule-based fallback (ใช้ตอนไม่มี Claude API key)
@@ -496,6 +495,7 @@ Rules: NO text, NO people, NO faces, NO logos`;
 let pendingBGImg = null;
 let genStyleIdx  = 0;
 let lastGenText  = '';
+let defaultStyleRot = 0; // วน default style ไม่ให้ซ้ำ
 
 // เลือก BG_STYLE index ที่ตรงกับเนื้อหามากที่สุด
 function pickBGStyleIdx(text) {
@@ -503,7 +503,7 @@ function pickBGStyleIdx(text) {
   if (/ประชุม|เห็นชอบ|ลงมติ|โหวต|มีมติ|อภิปราย|สภา/.test(t)) return 1; // ห้องประชุม
   if (/เอกสาร|กฎหมาย|พรบ|ระเบียบ|ประกาศ|คำสั่ง|หนังสือ|สั่งการ|ราชกิจจา/.test(t)) return 2; // ชั้นแฟ้มงาน
   if (/งบ|เงิน|ล้าน|พัน|จัดสรร|ค่าใช้จ่าย|ภาษี|งบประมาณ|กระทรวงการคลัง|ธนาคาร/.test(t)) return 0; // โต๊ะราชการ
-  return 3; // เสาทองราชการ (default)
+  return defaultStyleRot++ % BG_STYLES.length; // วนครบทุก style ไม่ติดแค่เสาทอง
 }
 
 // Keywords ดึงคุณภาพสไตล์ราชการไทยในทุก prompt
@@ -596,7 +596,7 @@ async function genOneBG() {
     } else {
       // GitHub Pages: img tag โหลดก่อน (ไม่มี timeout) → เมื่อโหลดเสร็จ
       // Pollinations cache รูปแล้ว → weserv.nl fetch เร็ว → ได้ CORS-safe dataURL
-      const seed = (Date.now() % 99999) | 0;
+      const seed = Math.floor(Math.random() * 999983);
       const neg = encodeURIComponent(
         'people, person, face, human, crowd, ' +
         'bird, birds, animal, animals, wildlife, creature, living being, ' +
