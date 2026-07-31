@@ -145,7 +145,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', sans-serif
 /* ── BG PREVIEW ── */
 .bg-preview {
   position: relative; border-radius: 8px; overflow: hidden;
-  height: 100px; background: #0f0f20;
+  height: 160px; background: #0f0f20;
   border: 2px solid #2e2e5e;
 }
 .bg-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -159,6 +159,18 @@ html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', sans-serif
   background: rgba(0,0,0,.7); color: #ccc; font-size: 11px;
   padding: 4px 8px; text-align: center;
 }
+.bg-options { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 100%; height: 100%; padding: 0; }
+.bg-option-item {
+  position: relative; cursor: pointer; border-radius: 6px; overflow: hidden;
+  border: 2px solid transparent; transition: border-color .15s; background: #111;
+  display: flex; flex-direction: column;
+}
+.bg-option-item img { width: 100%; flex: 1; object-fit: cover; min-height: 0; display: block; }
+.bg-option-item:hover { border-color: rgba(232,93,4,.6); }
+.bg-option-item.selected { border-color: var(--orange); }
+.bg-option-item.failed { opacity: .35; cursor: default; }
+.bg-option-item .spin { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 18px; }
+.bg-opt-label { font-size: 10px; text-align: center; padding: 3px 4px; background: rgba(0,0,0,.75); color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
 .bg-btn-row { display: flex; gap: 6px; }
 .bg-gen-btn {
   flex: 1; background: linear-gradient(135deg, #1a0a2e, #2a1a4e);
@@ -516,23 +528,22 @@ function pickBGStyleIdx(text) {
 
 // Keywords สไตล์ Thai Government Cinematic ในทุก prompt
 const GOV_STYLE = [
-  'Thai government official cinematic style',
-  'Thai news broadcast program backdrop aesthetic',
-  'Thai TV news studio dramatic lighting',
-  'deep navy blue and warm gold Thai official palette',
-  'dark polished marble and brass interior',
-  'dramatic cinematic shadows volumetric light',
-  'shallow depth of field bokeh background',
-  'negative space on left for text overlay',
-  'broadcast quality photorealistic commercial style',
-  'no text no typography no watermark no logo',
+  'official Thai government aesthetic',
+  'Thai news broadcast program set backdrop',
+  'navy blue and gold official Thai palette',
+  'dark polished marble brass interior',
+  'dramatic cinematic volumetric lighting',
+  'authoritative prestigious formal atmosphere',
+  'shallow depth of field bokeh',
+  'no text no watermark no logo',
+  'no person no human no living being no animal',
 ].join(', ');
 
 const BG_STYLES = [
-  { label: 'Thai Gov Hall',    style: 'empty formal Thai government ceremonial hall, dark interior with warm gold accent lighting from above, polished dark marble floor reflection, ornate gold trim architectural details, deep navy blue walls, dramatic volumetric light beams, no person no human no figure, cinematic photorealistic' },
-  { label: 'Thai Assembly',    style: 'empty Thai parliament assembly chamber interior, curved rows of vacant official seats, blue and gold institutional lighting, dramatic dark ceiling with soft glow below, official Thai government atmosphere, no person no human no figure, cinematic photorealistic broadcast quality' },
-  { label: 'Thai Tech Stage',  style: 'empty Thai government official press conference stage, dark backdrop with warm gold podium spotlight, subtle holographic data glow in background, deep navy and gold Thai official palette, dramatic cinematic shadows, no person no human no figure, photorealistic broadcast quality' },
-  { label: 'Thai Executive',   style: 'dark luxurious Thai government executive meeting room interior, long polished dark wood table empty, warm gold ceiling light reflection on table surface, deep blue walls gold trim, dramatic cinematic atmosphere, no person no human no figure, photorealistic commercial editorial style' },
+  { label: 'ห้องโถงราชการ',   style: 'empty grand government ministry ceremonial hall interior, ornate gold ceiling, polished dark marble floor with light reflection, symmetrical formal architecture, warm amber volumetric light beams from above, deep shadow on sides, dramatically lit, no person no human' },
+  { label: 'ห้องประชุมรัฐ',   style: 'empty parliamentary assembly chamber interior, curved rows of vacant dark wood seats with small name plates, deep blue and gold institutional lighting, high vaulted ceiling, dramatic dark atmosphere, officially prestigious, no person no human' },
+  { label: 'เวทีแถลงข่าว',    style: 'empty official government press conference stage, single golden spotlight beam hitting dark stage floor, deep navy backdrop, bokeh background glow, dramatic cinematic shadows, copy space on left, no person no human' },
+  { label: 'ห้องประชุมบริหาร', style: 'empty executive government conference chamber, long dark polished mahogany table reflecting warm chandelier overhead, gold trim dark walls, deep shadow at edges, dramatic cinematic interior, prestigious atmosphere, no person no human' },
 ];
 
 function saveHFToken() {
@@ -543,123 +554,125 @@ function saveHFToken() {
   setGenStatus('✅ บันทึก Token แล้ว — กด Auto Gen อีกครั้ง', '#3daa6e');
 }
 
+async function genSingleImg(prompt, isLocal) {
+  const seed = Math.floor(Math.random() * 999983);
+  let imgSrc;
+  if (isLocal) {
+    const r = await fetch('/gen-bg-image', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    if (!r.ok) { const t = await r.text(); throw new Error(`${r.status}: ${t.slice(0,80)}`); }
+    imgSrc = (await r.json()).image;
+  } else {
+    const polUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
+      `?width=832&height=1216&nologo=true&seed=${seed}&model=flux-realism`;
+    await new Promise((res, rej) => {
+      const pi = new Image(); pi.onload = res;
+      pi.onerror = () => rej(new Error('Pollinations ไม่ตอบสนอง'));
+      pi.src = polUrl;
+    });
+    try {
+      const resp = await fetch('https://images.weserv.nl/?url=' + encodeURIComponent(polUrl));
+      if (!resp.ok) throw new Error(`weserv ${resp.status}`);
+      const blob = await resp.blob();
+      imgSrc = await new Promise(r => { const fr = new FileReader(); fr.onload = e => r(e.target.result); fr.readAsDataURL(blob); });
+    } catch(e) { imgSrc = polUrl; }
+  }
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = () => rej(new Error('โหลดรูปล้มเหลว'));
+    img.src = imgSrc;
+  });
+}
+
 async function genOneBG() {
   const text = document.getElementById('textInput').value.trim();
-  if (!text) {
-    setGenStatus('⚠️ พิมพ์ข้อความในการ์ดก่อน', '#e94560'); return;
-  }
+  if (!text) { setGenStatus('⚠️ พิมพ์ข้อความในการ์ดก่อน', '#e94560'); return; }
 
   const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-
   const btn  = document.getElementById('genBtn');
   const prev = document.getElementById('bgPreview');
 
-  // content-aware: ถ้าข้อความเปลี่ยน ให้เริ่มจาก style ที่ match ก่อน แล้ววนต่อ
   if (text !== lastGenText) { genStyleIdx = pickBGStyleIdx(text); lastGenText = text; }
-  const { label, style } = BG_STYLES[genStyleIdx % BG_STYLES.length];
-  genStyleIdx++;
+  const idx1 = genStyleIdx % BG_STYLES.length;
+  const idx2 = (genStyleIdx + 1) % BG_STYLES.length;
+  genStyleIdx += 2;
 
-  btn.disabled = true;
-  btn.innerHTML = '⏳ 0s';
-  prev.innerHTML = `<div class="spin"><span>🎨</span><span id="timerDisplay" class="dot" style="font-size:22px;font-weight:700;color:#e85d04">0s</span><span class="dot">${label}…</span></div>`;
-  setGenStatus('วิเคราะห์ข้อความ…', '#e85d04');
+  btn.disabled = true; btn.innerHTML = '⏳ 0s';
+  prev.innerHTML = `
+    <div class="bg-options">
+      <div class="bg-option-item" id="bgOpt0"><div class="spin"><span>🎨</span><span class="dot">${BG_STYLES[idx1].label}</span></div></div>
+      <div class="bg-option-item" id="bgOpt1"><div class="spin"><span>🎨</span><span class="dot">${BG_STYLES[idx2].label}</span></div></div>
+    </div>`;
+  setGenStatus('กำลังสร้าง 2 รูป…', '#e85d04');
 
-  // ให้ Claude วิเคราะห์ข้อความแล้วสร้าง image prompt ที่ตรงเนื้อหา
   let scene = extractBGScene(text);
   try {
-    const r = await fetch('/gen-bg-prompt', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text })
-    });
+    const r = await fetch('/gen-bg-prompt', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({text}) });
     if (r.ok) { const d = await r.json(); if (d.bgPrompt) scene = d.bgPrompt; }
-  } catch(e) { /* fallback to extractBGScene */ }
+  } catch(e) {}
 
-  setGenStatus('กำลังสร้างรูป…', '#e85d04');
-  const prompt = `${scene}, ${style}, ${GOV_STYLE}, uninhabited, no living beings, no people no humans no figures no silhouettes no faces no animals no birds no insects no creatures no plants no flags no emblems no text no words`;
+  const negatives = 'no person no human no figure no silhouette no face no animal no bird no insect no plant no flag no emblem no text no words';
+  const buildPrompt = (i) => {
+    const { style } = BG_STYLES[i % BG_STYLES.length];
+    return `${scene}, ${style}, ${GOV_STYLE}, ${negatives}`;
+  };
 
   let elapsed = 0;
-  const timer = setInterval(() => {
-    elapsed++;
-    btn.innerHTML = `⏳ ${elapsed}s`;
-    const td = document.getElementById('timerDisplay');
-    if (td) td.textContent = elapsed + 's';
-  }, 1000);
+  const timer = setInterval(() => { elapsed++; btn.innerHTML = `⏳ ${elapsed}s`; }, 1000);
 
-  try {
-    let imgSrc = null;
+  const results = await Promise.allSettled([
+    genSingleImg(buildPrompt(idx1), isLocal),
+    genSingleImg(buildPrompt(idx2), isLocal),
+  ]);
+  clearInterval(timer);
 
-    if (isLocal) {
-      // localhost: server proxy (tries Pollinations → HF api-inference, no CORS issues)
-      const r = await fetch('/gen-bg-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
-      if (!r.ok) { const t = await r.text(); throw new Error(`${r.status}: ${t.slice(0,100)}`); }
-      const d = await r.json();
-      imgSrc = d.image;
-    } else {
-      // GitHub Pages: img tag โหลดก่อน (ไม่มี timeout) → เมื่อโหลดเสร็จ
-      // Pollinations cache รูปแล้ว → weserv.nl fetch เร็ว → ได้ CORS-safe dataURL
-      const seed = Math.floor(Math.random() * 999983);
-      const polUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
-        `?width=832&height=1216&nologo=true&seed=${seed}&model=flux-realism`;
-
-      // Step 1: img tag รอรูป generate เสร็จ (no timeout)
-      await new Promise((resolve, reject) => {
-        const pImg = new Image();
-        pImg.onload = resolve;
-        pImg.onerror = () => reject(new Error('Pollinations ไม่ตอบสนอง'));
-        pImg.src = polUrl;
-      });
-
-      // Step 2: รูป cache แล้ว → weserv fetch เร็ว → CORS-safe dataURL สำหรับ download
-      try {
-        const proxyUrl = 'https://images.weserv.nl/?url=' + encodeURIComponent(polUrl);
-        const resp = await fetch(proxyUrl);
-        if (!resp.ok) throw new Error(`weserv ${resp.status}`);
-        const blob = await resp.blob();
-        imgSrc = await new Promise(res => {
-          const fr = new FileReader(); fr.onload = e => res(e.target.result); fr.readAsDataURL(blob);
-        });
-      } catch(e) {
-        // weserv ล้มเหลว — ใช้ URL โดยตรง (preview ใช้ได้ download อาจ taint)
-        imgSrc = polUrl;
-      }
-    }
-
-    const img = new Image();
-    img.onload = () => {
-      clearInterval(timer);
-      pendingBGImg = img;
-      prev.innerHTML = `<img src="${img.src}"><div class="style-tag">${label}</div>`;
-      btn.disabled = false; btn.innerHTML = '🔄 สร้างใหม่';
-      setGenStatus(`✅ ${label} — ${elapsed}s`, '#3daa6e');
-      L.bg = img;
-      document.getElementById('bgChip').classList.add('loaded');
-      document.getElementById('bgName').textContent = '✨ AI Generated';
-      render();
-    };
-    img.onerror = () => {
-      clearInterval(timer);
-      prev.innerHTML = `<div class="spin"><span>❌</span><span class="dot">โหลดรูปล้มเหลว</span></div>`;
-      btn.disabled = false; btn.innerHTML = '🔄 ลองใหม่';
-      setGenStatus('❌ โหลดรูปล้มเหลว', '#e94560');
-    };
-    img.src = imgSrc;
-
-  } catch(e) {
-    clearInterval(timer);
-    const msg = e.message.includes('401') ? 'Token ไม่ถูกต้อง — ตรวจสอบอีกครั้ง' : e.message.slice(0, 80);
-    prev.innerHTML = `<div class="spin"><span>❌</span><span class="dot">${msg}</span></div>`;
+  if (results.every(r => r.status === 'rejected')) {
+    prev.innerHTML = `<div class="spin"><span>❌</span><span class="dot">สร้างรูปไม่สำเร็จ</span></div>`;
     btn.disabled = false; btn.innerHTML = '🔄 ลองใหม่';
-    setGenStatus('❌ ' + msg, '#e94560');
-    if (e.message.includes('401')) {
-      localStorage.removeItem('hf_token');
-      document.getElementById('hfTokenSection').style.display = '';
-    }
+    setGenStatus('❌ สร้างรูปไม่สำเร็จ', '#e94560'); return;
   }
+
+  prev.innerHTML = `<div class="bg-options" id="bgOptGrid"></div>`;
+  const grid = document.getElementById('bgOptGrid');
+  let firstApplied = false;
+
+  results.forEach((res, i) => {
+    const styleIdx = i === 0 ? idx1 : idx2;
+    const { label } = BG_STYLES[styleIdx % BG_STYLES.length];
+    const slot = document.createElement('div');
+    slot.className = 'bg-option-item';
+    if (res.status === 'fulfilled') {
+      const img = res.value;
+      slot.innerHTML = `<img src="${img.src}"><div class="bg-opt-label">${label}</div>`;
+      slot.addEventListener('click', () => {
+        document.querySelectorAll('.bg-option-item').forEach(el => el.classList.remove('selected'));
+        slot.classList.add('selected');
+        L.bg = img;
+        document.getElementById('bgChip').classList.add('loaded');
+        document.getElementById('bgName').textContent = '✨ AI Generated';
+        setGenStatus(`✅ ${label} — เลือกแล้ว`, '#3daa6e');
+        render();
+      });
+      if (!firstApplied) {
+        firstApplied = true;
+        slot.classList.add('selected');
+        L.bg = img; pendingBGImg = img;
+        document.getElementById('bgChip').classList.add('loaded');
+        document.getElementById('bgName').textContent = '✨ AI Generated';
+        render();
+      }
+    } else {
+      slot.innerHTML = `<div class="spin"><span>❌</span></div><div class="bg-opt-label">ไม่สำเร็จ</div>`;
+      slot.classList.add('failed');
+    }
+    grid.appendChild(slot);
+  });
+
+  btn.disabled = false; btn.innerHTML = '🔄 สร้างใหม่';
+  setGenStatus(`✅ เลือกรูปได้เลย — ${elapsed}s`, '#3daa6e');
 }
 
 function usePendingBG() {
