@@ -581,6 +581,34 @@ const BG_STYLES = [
       return 'empty grand government ministry ceremonial entrance hall interior, ornate gold ceiling, polished dark marble floor with warm light reflection, symmetrical formal architecture, amber volumetric light beams from above, deep shadow on sides';
     },
   },
+  {
+    label: 'เวทีแถลงข่าว',
+    type: 'hall',
+    prompt() {
+      return 'empty government official press conference stage, single warm golden spotlight beam hitting dark polished stage floor, deep navy backdrop with subtle bokeh glow, formal empty podium with microphones, dramatic cinematic shadows, broadcast quality, no person no human';
+    },
+  },
+  {
+    label: 'ห้องทำงานกลางคืน',
+    type: 'hall',
+    prompt() {
+      return 'dark government executive office interior at night, single desk lamp casting warm amber pool of light on empty polished mahogany desk, blurred city lights bokeh visible through large window, dark bookshelves along wall, prestigious cinematic atmosphere, no person no human';
+    },
+  },
+  {
+    label: 'ห้องเก็บเอกสาร',
+    type: 'hall',
+    prompt() {
+      return 'dramatic dark government document archive room, long rows of metal shelving tightly packed with thick official document binders, dramatic side lighting casting sharp shadows between shelf rows, deep perspective, institutional authoritative atmosphere, no person no human';
+    },
+  },
+  {
+    label: 'ทางเดินราชการ',
+    type: 'hall',
+    prompt() {
+      return 'empty formal Thai government ministry marble hallway at night, polished reflective floor with overhead warm light reflections, dark paneled walls with framed official documents, receding perspective depth, gold accent lighting, prestigious institutional atmosphere, no person no human';
+    },
+  },
 ];
 
 function saveHFToken() {
@@ -634,8 +662,11 @@ async function genOneBG() {
 
   if (text !== lastGenText) { genStyleIdx = pickBGStyleIdx(text); lastGenText = text; }
   const idx1 = genStyleIdx % BG_STYLES.length;
-  const idx2 = (genStyleIdx + 1) % BG_STYLES.length;
-  genStyleIdx += 2;
+  genStyleIdx++;
+
+  // idx2: สุ่มจาก styles ที่เหลือ (ไม่ซ้ำ idx1)
+  const otherIdxs = Array.from({length: BG_STYLES.length}, (_, i) => i).filter(i => i !== idx1);
+  const idx2 = otherIdxs[Math.floor(Math.random() * otherIdxs.length)];
 
   btn.disabled = true; btn.innerHTML = '⏳ 0s';
 
