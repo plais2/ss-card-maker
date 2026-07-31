@@ -408,6 +408,24 @@ function loadLayer(input, type) {
   });
   input.value = '';
 }
+// ดึงหัวข้อหลัก + หัวข้อรองจากข้อความในการ์ด
+function extractCardText(text) {
+  const lines = text.split('\n').map(l => l.trim());
+  const blankIdx = lines.findIndex(l => l === '');
+  let bigLines, smallLines;
+  if (blankIdx > 0) {
+    bigLines  = lines.slice(0, blankIdx).filter(Boolean);
+    smallLines = lines.slice(blankIdx + 1).filter(Boolean);
+  } else {
+    bigLines  = lines.slice(0, 2).filter(Boolean);
+    smallLines = lines.slice(2).filter(Boolean);
+  }
+  return {
+    headline: bigLines.join(' ').slice(0, 40) || 'ราชการไทย',
+    subtopic: (smallLines[0] || bigLines[1] || '').slice(0, 35) || 'เอกสารราชการ',
+  };
+}
+
 // ══════════════════════════════════════════
 //  AI GENERATE BG (Pollinations.ai)
 // ══════════════════════════════════════════
@@ -471,24 +489,23 @@ function ruleBasedFormat(text) {
 }
 
 async function openGemini() {
-  const text  = document.getElementById('textInput').value.trim();
-  const scene = text ? extractBGScene(text) : 'dramatic cinematic landscape';
+  const text = document.getElementById('textInput').value.trim();
   if (text && text !== lastGenText) { genStyleIdx = pickBGStyleIdx(text); lastGenText = text; }
-  const { label, style } = BG_STYLES[genStyleIdx % BG_STYLES.length];
+  const s = BG_STYLES[genStyleIdx % BG_STYLES.length];
   genStyleIdx++;
 
   const W = L.template ? L.template.naturalWidth  : 1080;
   const H = L.template ? L.template.naturalHeight : 1350;
+  const sceneStyle = text ? s.prompt(text) : s.prompt('');
 
   const prompt = `Create a ${W}x${H} portrait background image for a social media card.
-Scene: ${scene}
-Style: ${style}, high quality, sharp, professional photography
-Rules: NO text, NO people, NO faces, NO logos`;
+${sceneStyle}, ${GOV_STYLE}
+Rules: NO people, NO faces, NO logos`;
 
   const btn  = document.getElementById('geminiBtn');
   const prev = document.getElementById('bgPreview');
   btn.disabled = true; btn.innerHTML = '⏳ เปิด Gemini…';
-  prev.innerHTML = `<div class="spin"><span>✨</span><span id="timerDisplay" class="dot" style="font-size:20px;font-weight:700;color:#4285f4">0s</span><span class="dot">${label} via Gemini</span></div>`;
+  prev.innerHTML = `<div class="spin"><span>✨</span><span id="timerDisplay" class="dot" style="font-size:20px;font-weight:700;color:#4285f4">0s</span><span class="dot">${s.label} via Gemini</span></div>`;
   setGenStatus('เปิด Chrome และ Gemini Gem…', '#4285f4');
 
   let elapsed = 0;
@@ -518,30 +535,52 @@ let defaultStyleRot = 0; // วน default style ไม่ให้ซ้ำ
 // เลือก BG_STYLE index ที่ตรงกับเนื้อหามากที่สุด
 function pickBGStyleIdx(text) {
   const t = text.toLowerCase();
-  if (/ประชุม|เห็นชอบ|ลงมติ|โหวต|มีมติ|อภิปราย|สภา|ครม/.test(t)) return 1; // Thai Assembly
-  if (/แถลง|แถลงข่าว|เปิดตัว|ประกาศ|เปิดเผย/.test(t)) return 2;             // Thai Tech Stage
-  if (/งบ|เงิน|ล้าน|พัน|จัดสรร|ค่าใช้จ่าย|ภาษี|งบประมาณ|กระทรวงการคลัง|ธนาคาร|หุ้น|ลงทุน/.test(t)) return 3; // Thai Executive
+  if (/ประชุม|เห็นชอบ|ลงมติ|โหวต|มีมติ|อภิปราย|สภา|ครม/.test(t)) return 2; // ห้องประชุมรัฐ
+  if (/ตรวจสอบ|พิรุธ|ข้อพิรุธ|สอบสวน|ตรวจพบ|อัยการ|ปปช|ดีเอสไอ|ทุจริต/.test(t)) return 1; // Close-up Photo
+  if (/งบ|เงิน|ล้าน|พัน|จัดสรร|ภาษี|งบประมาณ|กระทรวงการคลัง|ธนาคาร/.test(t)) return 0; // Illustration
   return defaultStyleRot++ % BG_STYLES.length;
 }
 
-// Keywords สไตล์ Thai Government Cinematic ในทุก prompt
+// Keywords คุณภาพ Thai Government ติดทุก prompt
 const GOV_STYLE = [
   'official Thai government aesthetic',
-  'Thai news broadcast program set backdrop',
-  'navy blue and gold official Thai palette',
-  'dark polished marble brass interior',
-  'dramatic cinematic volumetric lighting',
+  'Thai broadcast news program backdrop',
+  'navy blue and gold Thai official palette',
   'authoritative prestigious formal atmosphere',
-  'shallow depth of field bokeh',
-  'no text no watermark no logo',
-  'no person no human no living being no animal',
+  'broadcast quality photorealistic',
 ].join(', ');
 
 const BG_STYLES = [
-  { label: 'ห้องโถงราชการ',   style: 'empty grand government ministry ceremonial hall interior, ornate gold ceiling, polished dark marble floor with light reflection, symmetrical formal architecture, warm amber volumetric light beams from above, deep shadow on sides, dramatically lit, no person no human' },
-  { label: 'ห้องประชุมรัฐ',   style: 'empty parliamentary assembly chamber interior, curved rows of vacant dark wood seats with small name plates, deep blue and gold institutional lighting, high vaulted ceiling, dramatic dark atmosphere, officially prestigious, no person no human' },
-  { label: 'เวทีแถลงข่าว',    style: 'empty official government press conference stage, single golden spotlight beam hitting dark stage floor, deep navy backdrop, bokeh background glow, dramatic cinematic shadows, copy space on left, no person no human' },
-  { label: 'ห้องประชุมบริหาร', style: 'empty executive government conference chamber, long dark polished mahogany table reflecting warm chandelier overhead, gold trim dark walls, deep shadow at edges, dramatic cinematic interior, prestigious atmosphere, no person no human' },
+  {
+    label: 'Illustration',
+    type: 'illustration',
+    prompt(text) {
+      const { headline, subtopic } = extractCardText(text);
+      return `flat lay infographic illustration style, folded tan Thai official government uniform jacket with Garuda emblem buttons and rank ribbon bar on deep blue textured surface, transparent document sleeve with prominent black Garuda seal and bold red Thai header text "${headline}", pale blue file organizer containing labeled government documents "${subtopic}", gold shoulder insignia and official lapel pins, rubber stamp red ink pad and desk calendar, natural diffused office light, high detail clean illustration visible fabric and paper texture`;
+    },
+  },
+  {
+    label: 'Close-up Photo',
+    type: 'photo',
+    prompt(text) {
+      const { headline } = extractCardText(text);
+      return `professional close-up shallow depth of field photograph of folded beige Thai government official uniform, gold Garuda shoulder insignia and polished brass Garuda buttons in sharp focus, soft natural office light highlighting fabric texture, blurred stack of Thai banknotes background, corner of paper desk calendar visible, corner of official document with black Garuda seal, bold red Thai headline "${headline}", editorial press news photography style`;
+    },
+  },
+  {
+    label: 'ห้องประชุมรัฐ',
+    type: 'hall',
+    prompt() {
+      return 'empty parliamentary assembly chamber interior, curved rows of vacant dark wood official seats with name plates, deep blue and gold institutional lighting, high vaulted ceiling with chandelier glow, dramatic dark prestigious atmosphere';
+    },
+  },
+  {
+    label: 'ห้องโถงราชการ',
+    type: 'hall',
+    prompt() {
+      return 'empty grand government ministry ceremonial entrance hall interior, ornate gold ceiling, polished dark marble floor with warm light reflection, symmetrical formal architecture, amber volumetric light beams from above, deep shadow on sides';
+    },
+  },
 ];
 
 function saveHFToken() {
@@ -610,18 +649,15 @@ async function genOneBG() {
     grid.appendChild(slot);
   });
 
-  setGenStatus('วิเคราะห์ข้อความ…', '#e85d04');
+  setGenStatus('กำลังสร้างรูป…', '#e85d04');
 
-  let scene = extractBGScene(text);
-  try {
-    const r = await fetch('/gen-bg-prompt', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({text}) });
-    if (r.ok) { const d = await r.json(); if (d.bgPrompt) scene = d.bgPrompt; }
-  } catch(e) {}
-
-  const negatives = 'no person no human no figure no silhouette no face no animal no bird no insect no plant no flag no emblem no text no words';
   const buildPrompt = (i) => {
-    const { style } = BG_STYLES[i % BG_STYLES.length];
-    return `${scene}, ${style}, ${GOV_STYLE}, ${negatives}`;
+    const s = BG_STYLES[i % BG_STYLES.length];
+    const sceneStyle = s.prompt(text);
+    const neg = s.type === 'hall'
+      ? 'no person no human no figure no silhouette no face no animal no bird no insect no plant no text no words'
+      : 'no person no human no figure no silhouette no face no animal no bird no insect no plant';
+    return `${sceneStyle}, ${GOV_STYLE}, ${neg}`;
   };
 
   let elapsed = 0;
