@@ -619,6 +619,8 @@ function saveHFToken() {
 
 async function genSingleImg(prompt, isLocal, attempt = 0) {
   const seed = Math.floor(Math.random() * 999983);
+  // attempt 0: flux-realism, attempt 1+: flux (เร็วกว่า เสถียรกว่า)
+  const model = attempt === 0 ? 'flux-realism' : 'flux';
   let imgSrc;
   try {
     if (isLocal) {
@@ -630,7 +632,7 @@ async function genSingleImg(prompt, isLocal, attempt = 0) {
       imgSrc = (await r.json()).image;
     } else {
       const polUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
-        `?width=832&height=1216&nologo=true&seed=${seed}&model=flux-realism`;
+        `?width=832&height=1216&nologo=true&seed=${seed}&model=${model}&enhance=false`;
       await new Promise((res, rej) => {
         const pi = new Image(); pi.onload = res;
         pi.onerror = () => rej(new Error('Pollinations ไม่ตอบสนอง'));
@@ -644,8 +646,8 @@ async function genSingleImg(prompt, isLocal, attempt = 0) {
       } catch(e) { imgSrc = polUrl; }
     }
   } catch(e) {
-    if (attempt < 1) {
-      await new Promise(r => setTimeout(r, 4000));
+    if (attempt < 2) {
+      await new Promise(r => setTimeout(r, 5000));
       return genSingleImg(prompt, isLocal, attempt + 1);
     }
     throw e;
