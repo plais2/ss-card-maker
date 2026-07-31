@@ -405,43 +405,43 @@ function extractBGScene(text) {
   const t = text.toLowerCase();
   const parts = [];
 
-  // ── กระทรวง / หน่วยงานเฉพาะ (top-down/macro — no room for people) ──
+  // ── กระทรวง / หน่วยงานเฉพาะ ──
   if (/กระทรวงการคลัง|คลัง|งบประมาณ/.test(t))
-    parts.push('overhead top-down of financial budget documents and rubber stamp on dark desk, fills frame');
+    parts.push('abstract holographic gold financial data visualization floating in dark cinematic environment, warm gold teal glow');
   else if (/กระทรวงศึกษา|ศธ|โรงเรียน|มหาวิทยาลัย/.test(t))
-    parts.push('overhead top-down of education ministry documents and academic folders on desk, fills frame');
+    parts.push('dark dramatic educational hall interior, glowing holographic screens with academic data, soft cinematic blue light');
   else if (/กระทรวงกลาโหม|ทหาร|กองทัพ/.test(t))
-    parts.push('overhead top-down of official defense documents and insignia-free folders on dark desk, fills frame');
+    parts.push('dark dramatic defense interior, cold blue cinematic lighting, architectural shadows, no person no figure');
   else if (/กระทรวงสาธารณสุข|สธ|โรงพยาบาล|แพทย์/.test(t))
-    parts.push('overhead top-down of health policy documents and medical reports on clean white desk, fills frame');
+    parts.push('clean cinematic medical tech interior, holographic health data screens, soft blue diffused light, no person');
   else if (/กระทรวง|หน่วยงาน|สำนักงาน|กรม|สภา/.test(t))
-    parts.push('overhead top-down of Thai government ministry documents and stamp pads on desk, fills frame');
+    parts.push('empty government assembly hall dark dramatic interior, soft institutional blue glow, cinematic shadows');
 
-  // ── เหตุการณ์ / การกระทำ (overhead or extreme macro) ──
+  // ── เหตุการณ์ / การกระทำ ──
   if (/ประชุม|เห็นชอบ|ลงมติ|โหวต|มีมติ|อภิปราย/.test(t))
-    parts.push('straight-down overhead of empty conference table surface with name plates and water glasses only, fills frame');
+    parts.push('empty government assembly hall dramatic dark interior, vacant seats with name plates, glowing screens background, cinematic');
   if (/อนุมัติ|อนุญาต|ลงนาม|ลงชื่อ|เซ็น/.test(t))
-    parts.push('extreme macro close-up of approval document with red stamp pad impression, fills frame');
+    parts.push('dramatic dark corporate stage lone spotlight, holographic approval interface glow, cinematic shadows, no person');
   if (/กฎหมาย|พรบ|ระเบียบ|ประกาศ|คำสั่ง|ราชกิจจา/.test(t))
-    parts.push('extreme macro close-up of thick document binder spines tightly packed filling entire frame');
-  if (/จัดสรร|งบ|ล้าน|พัน|ล้านล้าน|บาท/.test(t))
-    parts.push('overhead top-down of budget allocation papers with financial figures and rubber stamp, fills frame');
+    parts.push('dark dramatic digital library wall of glowing document screens, rows of holographic files, cinematic blue light');
+  if (/จัดสรร|งบ|ล้าน|พัน|บาท/.test(t))
+    parts.push('abstract holographic gold financial data display in dark cinematic environment, warm gold and teal glow');
 
   // ── ธรรมชาติ / สถานที่ ──
-  if (/ต้นไม้|tree|ป่า|forest/.test(t))   parts.push('lush green bokeh abstract dappled light through leaves texture');
-  if (/ทะเล|sea|ocean|ชายหาด/.test(t))    parts.push('dark deep ocean water surface abstract bokeh blue teal');
-  if (/ท้องฟ้า|sky|เมฆ|cloud/.test(t))    parts.push('abstract golden sky bokeh clouds glow warm');
-  if (/ดาว|star|อวกาศ|space/.test(t))     parts.push('deep space galaxy abstract dark blue purple bokeh stars');
-  if (/เมือง|city|ตึก|building/.test(t))  parts.push('city light bokeh abstract dark night neon blur');
+  if (/ต้นไม้|tree|ป่า|forest/.test(t))   parts.push('dark cinematic forest bokeh, teal green light rays through canopy, shallow depth of field');
+  if (/ทะเล|sea|ocean|ชายหาด/.test(t))    parts.push('dark cinematic ocean teal, dramatic waves bokeh, orange horizon glow, shallow depth of field');
+  if (/ท้องฟ้า|sky|เมฆ|cloud/.test(t))    parts.push('dramatic cinematic sky deep blue orange sunset bokeh, golden hour warm glow');
+  if (/ดาว|star|อวกาศ|space/.test(t))     parts.push('dark cinematic space deep blue purple galaxy bokeh, dramatic light rays');
+  if (/เมือง|city|ตึก|building/.test(t))  parts.push('dark cinematic city bokeh, teal and orange neon reflection, shallow depth of field');
 
   // ── เทคโนโลยี ──
-  if (/ai|ปัญญาประดิษฐ์|digital|เทคโนโลยี|tech|software/.test(t))
-    parts.push('dark neon blue abstract tech circuit pattern digital glow bokeh');
+  if (/ai|ปัญญาประดิษฐ์|digital|เทคโนโลยี|tech|software|ดิจิทัล/.test(t))
+    parts.push('abstract holographic AI neural network visualization, glowing circuit traces teal blue, dark cinematic, no person');
   if (/เงิน|finance|bank|ธนาคาร|หุ้น|ลงทุน/.test(t))
-    parts.push('dark abstract gold financial bokeh, polished marble surface');
+    parts.push('dark cinematic financial interior, abstract gold data hologram, polished marble reflection, no person');
 
   if (parts.length > 0) return parts.slice(0, 2).join(', ');
-  return 'Thai official government atmosphere, formal institutional setting';
+  return 'empty dramatic corporate stage lone spotlight, dark cinematic environment, holographic glow background';
 }
 
 // Rule-based fallback (ใช้ตอนไม่มี Claude API key)
@@ -508,33 +508,30 @@ let defaultStyleRot = 0; // วน default style ไม่ให้ซ้ำ
 // เลือก BG_STYLE index ที่ตรงกับเนื้อหามากที่สุด
 function pickBGStyleIdx(text) {
   const t = text.toLowerCase();
-  if (/ประชุม|เห็นชอบ|ลงมติ|โหวต|มีมติ|อภิปราย|สภา/.test(t)) return 1; // ห้องประชุม
-  if (/เอกสาร|กฎหมาย|พรบ|ระเบียบ|ประกาศ|คำสั่ง|หนังสือ|สั่งการ|ราชกิจจา/.test(t)) return 2; // ชั้นแฟ้มงาน
-  if (/งบ|เงิน|ล้าน|พัน|จัดสรร|ค่าใช้จ่าย|ภาษี|งบประมาณ|กระทรวงการคลัง|ธนาคาร/.test(t)) return 0; // โต๊ะราชการ
-  return defaultStyleRot++ % BG_STYLES.length; // วนครบทุก style ไม่ติดแค่เสาทอง
+  if (/ประชุม|เห็นชอบ|ลงมติ|โหวต|มีมติ|อภิปราย|สภา/.test(t)) return 1; // Gov Assembly
+  if (/ai|ปัญญาประดิษฐ์|digital|เทคโนโลยี|tech|software|ดิจิทัล/.test(t)) return 2; // Hologram Data
+  if (/งบ|เงิน|ล้าน|พัน|จัดสรร|ค่าใช้จ่าย|ภาษี|งบประมาณ|กระทรวงการคลัง|ธนาคาร|หุ้น|ลงทุน/.test(t)) return 3; // Executive Dark
+  return defaultStyleRot++ % BG_STYLES.length;
 }
 
-// Keywords ดึงคุณภาพสไตล์ราชการไทยในทุก prompt
+// Keywords สไตล์ Cinematic Corporate Tech ในทุก prompt
 const GOV_STYLE = [
-  'official government style',
-  'institutional architecture',
-  'symmetrical formal composition',
-  'authoritative prestigious',
-  'Thai neo-classical architecture',
-  'modern Thai traditional architectural details',
-  'minimalist kanok motifs',
-  'engraved geometric Thai patterns',
-  'gold and white tone',
-  'navy blue and gold',
-  'polished marble and brass',
-  'clean and structured',
+  'cinematic corporate tech style',
+  'cinematic lighting dramatic shadows',
+  'teal and orange color palette',
+  'deep blues and warm gold tones',
+  'shallow depth of field bokeh background',
+  'negative space on left for text overlay',
+  'clean composition copy space',
+  'photorealistic commercial editorial style',
+  'no text no typography no watermark no logo',
 ].join(', ');
 
-const BG_STYLES  = [
-  { label: 'โต๊ะราชการ',   style: 'straight-down bird\'s eye overhead shot of Thai government desk surface only, thick stacks of manila folders, rubber stamps, red stamp pads, dark wood grain, fills entire frame top-down, macro photography hyper-realistic, absolutely no person no human no figure' },
-  { label: 'ห้องประชุม',   style: 'looking straight down from ceiling at empty conference table surface, overhead aerial view, dark polished wood table top with name plates and water glasses only, no walls no ceiling no windows, flat top-down composition, macro hyper-realistic, absolutely no person no human no figure' },
-  { label: 'ชั้นแฟ้มงาน', style: 'extreme macro close-up filling entire frame with document binder spines only, rows of thick red and dark blue official binder spines tightly packed, gold lettering on spines, abstract flat texture, no depth no background, macro photography hyper-realistic, absolutely no person no human no figure' },
-  { label: 'ตรายางราชการ', style: 'extreme macro close-up of rubber stamp head pressed on red ink pad, close-up fills entire frame, intricate carved Thai official pattern on stamp rubber surface, dark background, no person no human no figure, macro photography hyper-realistic' },
+const BG_STYLES = [
+  { label: 'Corporate Stage',  style: 'empty dramatic corporate stage lone spotlight on dark stage floor, holographic glow in background, cinematic lighting, teal and orange color palette, shallow depth of field bokeh, negative space on left for text, no person no human no figure, photorealistic editorial commercial style' },
+  { label: 'Gov Assembly',     style: 'empty government assembly hall interior dramatic dark environment, rows of empty chairs with name plates, soft glowing blue screens in background, deep blues and warm gold tones, cinematic lighting dramatic shadows, copy space for text, no person no human no figure, photorealistic commercial editorial style' },
+  { label: 'Hologram Data',    style: 'abstract holographic display floating in dark space, glowing data lines circuit board traces digital artifacts, transparent glowing screens, cinematic dramatic lighting, teal and blue neon glow, deep dark background, no person no human no figure, photorealistic commercial style' },
+  { label: 'Executive Dark',   style: 'dark dramatic luxurious corporate interior, polished marble floor reflection, soft diffused light beams from above, warm gold accent lighting, deep blue tones, bokeh background, negative space on left for text, no person no human no figure, photorealistic editorial commercial style' },
 ];
 
 function saveHFToken() {
