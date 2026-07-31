@@ -441,7 +441,7 @@ function extractBGScene(text) {
     parts.push('dark cinematic financial interior, abstract gold data hologram, polished marble reflection, no person');
 
   if (parts.length > 0) return parts.slice(0, 2).join(', ');
-  return 'empty dramatic corporate stage lone spotlight, dark cinematic environment, holographic glow background';
+  return 'empty formal Thai government ceremonial hall, dark interior warm gold accent lighting, polished marble, cinematic';
 }
 
 // Rule-based fallback (ใช้ตอนไม่มี Claude API key)
@@ -508,34 +508,31 @@ let defaultStyleRot = 0; // วน default style ไม่ให้ซ้ำ
 // เลือก BG_STYLE index ที่ตรงกับเนื้อหามากที่สุด
 function pickBGStyleIdx(text) {
   const t = text.toLowerCase();
-  if (/ประชุม|เห็นชอบ|ลงมติ|โหวต|มีมติ|อภิปราย|สภา/.test(t)) return 1; // Gov Assembly
-  if (/ai|ปัญญาประดิษฐ์|digital|เทคโนโลยี|tech|software|ดิจิทัล/.test(t)) return 2; // Hologram Data
-  if (/งบ|เงิน|ล้าน|พัน|จัดสรร|ค่าใช้จ่าย|ภาษี|งบประมาณ|กระทรวงการคลัง|ธนาคาร|หุ้น|ลงทุน/.test(t)) return 3; // Executive Dark
+  if (/ประชุม|เห็นชอบ|ลงมติ|โหวต|มีมติ|อภิปราย|สภา|ครม/.test(t)) return 1; // Thai Assembly
+  if (/แถลง|แถลงข่าว|เปิดตัว|ประกาศ|เปิดเผย/.test(t)) return 2;             // Thai Tech Stage
+  if (/งบ|เงิน|ล้าน|พัน|จัดสรร|ค่าใช้จ่าย|ภาษี|งบประมาณ|กระทรวงการคลัง|ธนาคาร|หุ้น|ลงทุน/.test(t)) return 3; // Thai Executive
   return defaultStyleRot++ % BG_STYLES.length;
 }
 
-// Keywords สไตล์ Cinematic Corporate Tech + Thai Broadcast ในทุก prompt
+// Keywords สไตล์ Thai Government Cinematic ในทุก prompt
 const GOV_STYLE = [
-  'cinematic corporate tech style',
-  'Thai broadcast television production aesthetic',
-  'Thai news program set backdrop',
-  'Thai TV studio dramatic lighting',
-  'broadcast quality cinematography',
-  'cinematic lighting dramatic shadows',
-  'teal and orange color palette',
-  'deep blues and warm gold tones',
+  'Thai government official cinematic style',
+  'Thai news broadcast program backdrop aesthetic',
+  'Thai TV news studio dramatic lighting',
+  'deep navy blue and warm gold Thai official palette',
+  'dark polished marble and brass interior',
+  'dramatic cinematic shadows volumetric light',
   'shallow depth of field bokeh background',
   'negative space on left for text overlay',
-  'clean composition copy space',
-  'photorealistic commercial broadcast editorial style',
+  'broadcast quality photorealistic commercial style',
   'no text no typography no watermark no logo',
 ].join(', ');
 
 const BG_STYLES = [
-  { label: 'Corporate Stage',  style: 'empty dramatic corporate stage lone spotlight on dark stage floor, holographic glow in background, cinematic lighting, teal and orange color palette, shallow depth of field bokeh, negative space on left for text, no person no human no figure, photorealistic editorial commercial style' },
-  { label: 'Gov Assembly',     style: 'empty government assembly hall interior dramatic dark environment, rows of empty chairs with name plates, soft glowing blue screens in background, deep blues and warm gold tones, cinematic lighting dramatic shadows, copy space for text, no person no human no figure, photorealistic commercial editorial style' },
-  { label: 'Hologram Data',    style: 'abstract holographic display floating in dark space, glowing data lines circuit board traces digital artifacts, transparent glowing screens, cinematic dramatic lighting, teal and blue neon glow, deep dark background, no person no human no figure, photorealistic commercial style' },
-  { label: 'Executive Dark',   style: 'dark dramatic luxurious corporate interior, polished marble floor reflection, soft diffused light beams from above, warm gold accent lighting, deep blue tones, bokeh background, negative space on left for text, no person no human no figure, photorealistic editorial commercial style' },
+  { label: 'Thai Gov Hall',    style: 'empty formal Thai government ceremonial hall, dark interior with warm gold accent lighting from above, polished dark marble floor reflection, ornate gold trim architectural details, deep navy blue walls, dramatic volumetric light beams, no person no human no figure, cinematic photorealistic' },
+  { label: 'Thai Assembly',    style: 'empty Thai parliament assembly chamber interior, curved rows of vacant official seats, blue and gold institutional lighting, dramatic dark ceiling with soft glow below, official Thai government atmosphere, no person no human no figure, cinematic photorealistic broadcast quality' },
+  { label: 'Thai Tech Stage',  style: 'empty Thai government official press conference stage, dark backdrop with warm gold podium spotlight, subtle holographic data glow in background, deep navy and gold Thai official palette, dramatic cinematic shadows, no person no human no figure, photorealistic broadcast quality' },
+  { label: 'Thai Executive',   style: 'dark luxurious Thai government executive meeting room interior, long polished dark wood table empty, warm gold ceiling light reflection on table surface, deep blue walls gold trim, dramatic cinematic atmosphere, no person no human no figure, photorealistic commercial editorial style' },
 ];
 
 function saveHFToken() {
