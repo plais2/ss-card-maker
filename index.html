@@ -550,6 +550,15 @@ const GOV_STYLE = [
   'broadcast quality photorealistic',
 ].join(', ');
 
+// สำหรับ hall styles — ไม่ใส่ navy blue เพราะจะ override สีน้ำตาลอุ่น
+const HALL_GOV_STYLE = [
+  'official Thai government aesthetic',
+  'Thai broadcast news program backdrop',
+  'warm beige cream and brown official palette',
+  'authoritative prestigious formal atmosphere',
+  'broadcast quality photorealistic',
+].join(', ');
+
 const BG_STYLES = [
   {
     label: 'Illustration',
@@ -693,10 +702,11 @@ async function genOneBG() {
   const buildPrompt = (i) => {
     const s = BG_STYLES[i % BG_STYLES.length];
     const sceneStyle = s.prompt(text);
+    const govStyle = s.type === 'hall' ? HALL_GOV_STYLE : GOV_STYLE;
     const neg = s.type === 'hall'
       ? 'no person no human no figure no silhouette no face no animal no bird no insect no plant no text no words'
       : 'no person no human no figure no silhouette no face no animal no bird no insect no plant';
-    return `${sceneStyle}, ${GOV_STYLE}, ${neg}`;
+    return `${sceneStyle}, ${govStyle}, ${neg}`;
   };
 
   let elapsed = 0;
