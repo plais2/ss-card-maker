@@ -605,19 +605,8 @@ async function genOneBG() {
       // GitHub Pages: img tag โหลดก่อน (ไม่มี timeout) → เมื่อโหลดเสร็จ
       // Pollinations cache รูปแล้ว → weserv.nl fetch เร็ว → ได้ CORS-safe dataURL
       const seed = Math.floor(Math.random() * 999983);
-      const neg = encodeURIComponent(
-        'people, person, man, woman, men, women, human, humans, face, faces, ' +
-        'figure, figures, silhouette, portrait, body, hand, hands, crowd, ' +
-        'bird, birds, animal, animals, wildlife, creature, creatures, living being, living beings, organism, ' +
-        'insect, insects, bee, fly, butterfly, fish, cat, dog, horse, cow, elephant, ' +
-        'plant, plants, tree, grass, flower, ' +
-        'ribbon, ribbons, bow, bows, decoration, decorations, garland, wreath, ' +
-        'column, columns, pillar, pillars, ' +
-        'flag, flags, banner, emblem, coat of arms, crest, insignia, ' +
-        'text, letters, words, watermark, logo, blurry, distorted, anime'
-      );
       const polUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
-        `?width=832&height=1216&nologo=true&seed=${seed}&model=flux-realism&negative=${neg}`;
+        `?width=832&height=1216&nologo=true&seed=${seed}&model=flux-realism`;
 
       // Step 1: img tag รอรูป generate เสร็จ (no timeout)
       await new Promise((resolve, reject) => {
