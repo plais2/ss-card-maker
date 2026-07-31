@@ -601,12 +601,18 @@ async function genOneBG() {
   genStyleIdx += 2;
 
   btn.disabled = true; btn.innerHTML = '⏳ 0s';
-  prev.innerHTML = `
-    <div class="bg-options">
-      <div class="bg-option-item" id="bgOpt0"><div class="spin"><span>🎨</span><span class="dot">${BG_STYLES[idx1].label}</span></div></div>
-      <div class="bg-option-item" id="bgOpt1"><div class="spin"><span>🎨</span><span class="dot">${BG_STYLES[idx2].label}</span></div></div>
-    </div>`;
-  setGenStatus('กำลังสร้าง 2 รูป…', '#e85d04');
+
+  // สร้าง grid ก่อน — populate ทีละ slot เมื่อรูปพร้อม
+  prev.innerHTML = `<div class="bg-options" id="bgOptGrid"></div>`;
+  const grid = document.getElementById('bgOptGrid');
+  [idx1, idx2].forEach((si, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'bg-option-item'; slot.id = `bgOpt${i}`;
+    slot.innerHTML = `<div class="spin"><span>🎨</span><span class="dot">${BG_STYLES[si % BG_STYLES.length].label}</span></div>`;
+    grid.appendChild(slot);
+  });
+
+  setGenStatus('วิเคราะห์ข้อความ…', '#e85d04');
 
   let scene = extractBGScene(text);
   try {
@@ -622,57 +628,54 @@ async function genOneBG() {
 
   let elapsed = 0;
   const timer = setInterval(() => { elapsed++; btn.innerHTML = `⏳ ${elapsed}s`; }, 1000);
-
-  const results = await Promise.allSettled([
-    genSingleImg(buildPrompt(idx1), isLocal),
-    genSingleImg(buildPrompt(idx2), isLocal),
-  ]);
-  clearInterval(timer);
-
-  if (results.every(r => r.status === 'rejected')) {
-    prev.innerHTML = `<div class="spin"><span>❌</span><span class="dot">สร้างรูปไม่สำเร็จ</span></div>`;
-    btn.disabled = false; btn.innerHTML = '🔄 ลองใหม่';
-    setGenStatus('❌ สร้างรูปไม่สำเร็จ', '#e94560'); return;
-  }
-
-  prev.innerHTML = `<div class="bg-options" id="bgOptGrid"></div>`;
-  const grid = document.getElementById('bgOptGrid');
   let firstApplied = false;
 
-  results.forEach((res, i) => {
-    const styleIdx = i === 0 ? idx1 : idx2;
+  const fillSlot = (slotIdx, styleIdx, img) => {
     const { label } = BG_STYLES[styleIdx % BG_STYLES.length];
-    const slot = document.createElement('div');
-    slot.className = 'bg-option-item';
-    if (res.status === 'fulfilled') {
-      const img = res.value;
-      slot.innerHTML = `<img src="${img.src}"><div class="bg-opt-label">${label}</div>`;
-      slot.addEventListener('click', () => {
-        document.querySelectorAll('.bg-option-item').forEach(el => el.classList.remove('selected'));
-        slot.classList.add('selected');
-        L.bg = img;
-        document.getElementById('bgChip').classList.add('loaded');
-        document.getElementById('bgName').textContent = '✨ AI Generated';
-        setGenStatus(`✅ ${label} — เลือกแล้ว`, '#3daa6e');
-        render();
-      });
-      if (!firstApplied) {
-        firstApplied = true;
-        slot.classList.add('selected');
-        L.bg = img; pendingBGImg = img;
-        document.getElementById('bgChip').classList.add('loaded');
-        document.getElementById('bgName').textContent = '✨ AI Generated';
-        render();
-      }
-    } else {
-      slot.innerHTML = `<div class="spin"><span>❌</span></div><div class="bg-opt-label">ไม่สำเร็จ</div>`;
-      slot.classList.add('failed');
+    const slot = document.getElementById(`bgOpt${slotIdx}`);
+    if (!slot) return;
+    slot.innerHTML = `<img src="${img.src}"><div class="bg-opt-label">${label}</div>`;
+    slot.addEventListener('click', () => {
+      document.querySelectorAll('.bg-option-item').forEach(el => el.classList.remove('selected'));
+      slot.classList.add('selected');
+      L.bg = img;
+      document.getElementById('bgChip').classList.add('loaded');
+      document.getElementById('bgName').textContent = '✨ AI Generated';
+      setGenStatus(`✅ ${label} — เลือกแล้ว`, '#3daa6e');
+      render();
+    });
+    if (!firstApplied) {
+      firstApplied = true; slot.classList.add('selected');
+      L.bg = img; pendingBGImg = img;
+      document.getElementById('bgChip').classList.add('loaded');
+      document.getElementById('bgName').textContent = '✨ AI Generated';
+      render();
     }
-    grid.appendChild(slot);
-  });
+  };
 
+  const failSlot = (slotIdx, styleIdx) => {
+    const { label } = BG_STYLES[styleIdx % BG_STYLES.length];
+    const slot = document.getElementById(`bgOpt${slotIdx}`);
+    if (slot) { slot.innerHTML = `<div class="spin"><span>❌</span></div><div class="bg-opt-label">${label}</div>`; slot.classList.add('failed'); }
+  };
+
+  // Sequential — รอรูป 1 เสร็จก่อน แสดงทันที แล้วค่อย gen รูป 2
+  try {
+    setGenStatus('กำลังสร้างรูปที่ 1…', '#e85d04');
+    fillSlot(0, idx1, await genSingleImg(buildPrompt(idx1), isLocal));
+    setGenStatus('รูป 1 สำเร็จ — กำลังสร้างรูปที่ 2…', '#e85d04');
+  } catch(e) {
+    failSlot(0, idx1);
+    setGenStatus('รูป 1 ไม่สำเร็จ — กำลังสร้างรูปที่ 2…', '#888');
+  }
+  try {
+    fillSlot(1, idx2, await genSingleImg(buildPrompt(idx2), isLocal));
+  } catch(e) { failSlot(1, idx2); }
+
+  clearInterval(timer);
   btn.disabled = false; btn.innerHTML = '🔄 สร้างใหม่';
-  setGenStatus(`✅ เลือกรูปได้เลย — ${elapsed}s`, '#3daa6e');
+  setGenStatus(firstApplied ? `✅ เลือกรูปได้เลย — ${elapsed}s` : '❌ สร้างรูปไม่สำเร็จ',
+               firstApplied ? '#3daa6e' : '#e94560');
 }
 
 function usePendingBG() {
