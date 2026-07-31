@@ -554,17 +554,15 @@ const BG_STYLES = [
   {
     label: 'Illustration',
     type: 'illustration',
-    prompt(text) {
-      const { headline, subtopic } = extractCardText(text);
-      return `flat lay infographic illustration style, folded tan Thai official government uniform jacket with gold buttons and rank ribbon bar on deep blue textured surface, transparent document sleeve with bold red Thai header text "${headline}", pale blue file organizer containing labeled government documents "${subtopic}", gold shoulder insignia and official lapel pins, rubber stamp red ink pad and desk calendar, natural diffused office light, high detail clean illustration visible fabric and paper texture`;
+    prompt() {
+      return 'flat lay infographic illustration style, folded tan Thai official government uniform jacket with gold buttons and rank ribbon bar on deep blue textured surface, transparent document sleeve with official Thai government papers and bold red header text, pale blue file organizer with labeled government files, gold shoulder insignia and official lapel pins, rubber stamp red ink pad and desk calendar, natural diffused office light, high detail clean illustration visible fabric paper texture';
     },
   },
   {
     label: 'Close-up Photo',
     type: 'photo',
-    prompt(text) {
-      const { headline } = extractCardText(text);
-      return `professional close-up shallow depth of field photograph of folded beige Thai government official uniform, gold shoulder insignia and polished brass buttons in sharp focus, soft natural office light highlighting fabric texture, blurred stack of Thai banknotes background, corner of paper desk calendar visible, corner of official stamped document, bold red Thai headline "${headline}", editorial press news photography style`;
+    prompt() {
+      return 'professional close-up shallow depth of field photograph of folded beige Thai government official uniform, gold shoulder insignia and polished brass buttons in sharp focus, soft natural office light highlighting fabric texture, blurred stack of Thai banknotes background, corner of paper desk calendar visible, corner of official stamped government document, bold red headline text, editorial press news photography style';
     },
   },
   {
@@ -619,30 +617,38 @@ function saveHFToken() {
   setGenStatus('✅ บันทึก Token แล้ว — กด Auto Gen อีกครั้ง', '#3daa6e');
 }
 
-async function genSingleImg(prompt, isLocal) {
+async function genSingleImg(prompt, isLocal, attempt = 0) {
   const seed = Math.floor(Math.random() * 999983);
   let imgSrc;
-  if (isLocal) {
-    const r = await fetch('/gen-bg-image', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
-    });
-    if (!r.ok) { const t = await r.text(); throw new Error(`${r.status}: ${t.slice(0,80)}`); }
-    imgSrc = (await r.json()).image;
-  } else {
-    const polUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
-      `?width=832&height=1216&nologo=true&seed=${seed}&model=flux-realism`;
-    await new Promise((res, rej) => {
-      const pi = new Image(); pi.onload = res;
-      pi.onerror = () => rej(new Error('Pollinations ไม่ตอบสนอง'));
-      pi.src = polUrl;
-    });
-    try {
-      const resp = await fetch('https://images.weserv.nl/?url=' + encodeURIComponent(polUrl));
-      if (!resp.ok) throw new Error(`weserv ${resp.status}`);
-      const blob = await resp.blob();
-      imgSrc = await new Promise(r => { const fr = new FileReader(); fr.onload = e => r(e.target.result); fr.readAsDataURL(blob); });
-    } catch(e) { imgSrc = polUrl; }
+  try {
+    if (isLocal) {
+      const r = await fetch('/gen-bg-image', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+      if (!r.ok) { const t = await r.text(); throw new Error(`${r.status}: ${t.slice(0,80)}`); }
+      imgSrc = (await r.json()).image;
+    } else {
+      const polUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
+        `?width=832&height=1216&nologo=true&seed=${seed}&model=flux-realism`;
+      await new Promise((res, rej) => {
+        const pi = new Image(); pi.onload = res;
+        pi.onerror = () => rej(new Error('Pollinations ไม่ตอบสนอง'));
+        pi.src = polUrl;
+      });
+      try {
+        const resp = await fetch('https://images.weserv.nl/?url=' + encodeURIComponent(polUrl));
+        if (!resp.ok) throw new Error(`weserv ${resp.status}`);
+        const blob = await resp.blob();
+        imgSrc = await new Promise(r => { const fr = new FileReader(); fr.onload = e => r(e.target.result); fr.readAsDataURL(blob); });
+      } catch(e) { imgSrc = polUrl; }
+    }
+  } catch(e) {
+    if (attempt < 1) {
+      await new Promise(r => setTimeout(r, 4000));
+      return genSingleImg(prompt, isLocal, attempt + 1);
+    }
+    throw e;
   }
   return new Promise((res, rej) => {
     const img = new Image();
@@ -724,7 +730,7 @@ async function genOneBG() {
     if (slot) { slot.innerHTML = `<div class="spin"><span>❌</span></div><div class="bg-opt-label">${label}</div>`; slot.classList.add('failed'); }
   };
 
-  // Sequential — รอรูป 1 เสร็จก่อน แสดงทันที แล้วค่อย gen รูป 2
+  // Sequential + หน่วง 2s ระหว่างสองรูปเพื่อป้องกัน rate-limit
   try {
     setGenStatus('กำลังสร้างรูปที่ 1…', '#e85d04');
     fillSlot(0, idx1, await genSingleImg(buildPrompt(idx1), isLocal));
@@ -733,6 +739,7 @@ async function genOneBG() {
     failSlot(0, idx1);
     setGenStatus('รูป 1 ไม่สำเร็จ — กำลังสร้างรูปที่ 2…', '#888');
   }
+  await new Promise(r => setTimeout(r, 2000));
   try {
     fillSlot(1, idx2, await genSingleImg(buildPrompt(idx2), isLocal));
   } catch(e) { failSlot(1, idx2); }
